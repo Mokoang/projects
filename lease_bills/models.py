@@ -82,6 +82,9 @@ class Bill(Model):
     balance             = models.DecimalField(max_digits=10, decimal_places=2,validators=[MinValueValidator(0.01)])
 
      
+    def __str__(self):
+        return self.invoice_number
+
 
     class Meta:
         verbose_name = 'Lease Bill'
@@ -100,31 +103,75 @@ class Bill(Model):
                 thearea_list      = []
                 theareaunit_list  = []
                 therecorddate_list= []
-                
 
                 for area_data in adjusted_area.objects.all().filter(lease_number_id = instance.id).order_by('record_date'):
                     if(len(thearea_list)>0):# insertion 2,3,4,5 etc
                         #check same year changes
+                        
                         if(therecorddate_list[len(thearea_list)-1].year==area_data.record_date.year):
-                            #check the bigger date 
-                            if (therecorddate_list[len(thearea_list)-1] >=area_data.record_date and area_data.record_date<=self.billing_date ):
-                                thearea_list.insert(len(thearea_list)-1,area_data.proposed_area)
-                                theareaunit_list.insert(len(theareaunit_list)-1,area_data.area_units)
-                                therecorddate_list.insert(len(therecorddate_list)-1,area_data.record_date)
+                            
+                            #check the date that is below the closing date
+                            closingdate = False
+                            for closingdata in Bill_finale.objects.all().filter(period = area_data.record_date.year):
+                                closingdate = True
+                                if area_data.record_date <=closingdata.closing_date:                
+                                    if (therecorddate_list[len(thearea_list)-1] <=area_data.record_date and area_data.record_date<=self.billing_date ):
+                                        thearea_list[len(thearea_list)-1]=area_data.proposed_area
+                                        theareaunit_list[len(thearea_list)-1]=instance.area_units
+                                        therecorddate_list[len(therecorddate_list)-1]=area_data.record_date
+                                else: #the change happend after closing date hence the change will have effect the following year
+                                    
+                                    thearea_list.append(area_data.proposed_area)
+                                    theareaunit_list.append(instance.area_units)
+                                    therecorddate_list.append(datetime.date(area_data.record_date.year+1,1,1))
+                            if not closingdate:
+                                if (therecorddate_list[len(thearea_list)-1] <= area_data.record_date and area_data.record_date<=self.billing_date ):
+                                    thearea_list[len(thearea_list)-1]=area_data.proposed_area
+                                    theareaunit_list[len(thearea_list)-1]=instance.area_units
+                                    therecorddate_list[len(therecorddate_list)-1]=area_data.record_date
                         else:#diffrent year changes
+                            closingdate =False
+                            for closingdata in Bill_finale.objects.all().filter(period = area_data.record_date.year):
+                                closingdate = True
+                                if area_data.record_date <=closingdata.closing_date:
+                                    thearea_list.append(area_data.proposed_area)
+                                    theareaunit_list.append(instance.area_units)
+                                    therecorddate_list.append(area_data.record_date)
+                                else: #the change happend after closing date hence the change will have effect the following year
+                                    thearea_list.append(area_data.proposed_area)
+                                    theareaunit_list.append(instance.area_units)
+                                    therecorddate_list.append(datetime.date(area_data.record_date.year+1,1,1))
+                            if not closingdate:
+                                thearea_list.append(area_data.proposed_area)
+                                theareaunit_list.append(instance.area_units)
+                                therecorddate_list.append(area_data.record_date)
+
+                    else:#initial insertio
+                        if landuse_data.description=='Initial':
                             thearea_list.append(area_data.proposed_area)
-                            theareaunit_list.append(area_data.area_units)
+                            theareaunit_list.append(instance.area_units)
                             therecorddate_list.append(area_data.record_date)
-                    else:#initial insertion
-                        thearea_list.append(area_data.proposed_area)
-                        theareaunit_list.append(area_data.area_units)
-                        therecorddate_list.append(area_data.record_date)
+                        else:#description is another thing else
+                            closingdate = False
+                            for closingdata in Bill_finale.objects.all().filter(period = area_data.record_date.year):
+                                closingdate = True
+                                if area_data.record_date <=closingdata.closing_date:
+                                    thearea_list.append(area_data.proposed_area)
+                                    theareaunit_list.append(instance.area_units)
+                                    therecorddate_list.append(area_data.record_date)
+                                else: #the change happend after closing date hence the change will have effect the following year
+                                    thearea_list.append(area_data.proposed_area)
+                                    theareaunit_list.append(instance.area_units)
+                                    therecorddate_list.append(datetime.date(area_data.record_date.year+1,1,1))  
+                            if not closingdate:
+                                thearea_list.append(area_data.proposed_area)
+                                theareaunit_list.append(instance.area_units)
+                                therecorddate_list.append(area_data.record_date) 
 
                 if len(thearea_list)==0:
                     thearea_list.append(instance.area)
                     theareaunit_list.append(instance.area_units)
                     therecorddate_list.append(instance.registration_date)
-
 
                 landusetype_list = []
                 recorddate_list  = []
@@ -133,23 +180,25 @@ class Bill(Model):
                 for landuse_data in alter_LandUse.objects.all().filter(lease_number_id = instance.id).order_by('record_date'):
                     if(len(landusetype_list)>0):# insertion 2,3,4,5 etc
                         #check same year changes
+                        
                         if(recorddate_list[len(landusetype_list)-1].year==landuse_data.record_date.year):
+                            
                             #check the date that is below the closing date
                             closingdate = False
                             for closingdata in Bill_finale.objects.all().filter(period = landuse_data.record_date.year):
                                 closingdate = True
                                 if landuse_data.record_date <=closingdata.closing_date:                
-                                    if (recorddate_list[len(landusetype_list)-1] >=landuse_data.record_date and landuse_data.record_date<=self.billing_date ):
-                                        landusetype_list.insert(len(landusetype_list)-1,landuse_data.proposed_land_use_id)
-                                        recorddate_list.insert(len(recorddate_list)-1,landuse_data.record_date)
+                                    if (recorddate_list[len(landusetype_list)-1] <=landuse_data.record_date and landuse_data.record_date<=self.billing_date ):
+                                        landusetype_list[len(landusetype_list)-1]=landuse_data.proposed_land_use_id
+                                        recorddate_list[len(recorddate_list)-1]=landuse_data.record_date
                                 else: #the change happend after closing date hence the change will have effect the following year
+                                    
                                     landusetype_list.append(landuse_data.proposed_land_use_id)
                                     recorddate_list.append(datetime.date(landuse_data.record_date.year+1,1,1))
                             if not closingdate:
-                                if (recorddate_list[len(landusetype_list)-1] >=landuse_data.record_date and landuse_data.record_date<=self.billing_date ):
-                                    landusetype_list.insert(len(landusetype_list)-1,landuse_data.proposed_land_use_id)
-                                    recorddate_list.insert(len(recorddate_list)-1,landuse_data.record_date)
-
+                                if (recorddate_list[len(landusetype_list)-1] <= landuse_data.record_date and landuse_data.record_date<=self.billing_date ):
+                                    landusetype_list[len(landusetype_list)-1]=landuse_data.proposed_land_use_id
+                                    recorddate_list[len(recorddate_list)-1]=landuse_data.record_date
                         else:#diffrent year changes
                             closingdate =False
                             for closingdata in Bill_finale.objects.all().filter(period = landuse_data.record_date.year):
@@ -163,8 +212,6 @@ class Bill(Model):
                             if not closingdate:
                                 landusetype_list.append(landuse_data.proposed_land_use_id)
                                 recorddate_list.append(landuse_data.record_date)
-
-
 
                     else:#initial insertio
                         if landuse_data.description=='Initial':
@@ -183,8 +230,11 @@ class Bill(Model):
                             if not closingdate:
                                 landusetype_list.append(landuse_data.proposed_land_use_id)
                                 recorddate_list.append(landuse_data.record_date) 
-                                                                     
-                    cursor.execute("INSERT INTO testing (name,description) VALUES (%s,%s)",[landusetype_list[len(landusetype_list)-1],recorddate_list[len(landusetype_list)-1]])
+
+                i=0
+                for dt in landusetype_list:
+                    cursor.execute("INSERT INTO testing (name,description) VALUES (%s,%s)",[recorddate_list[i],landusetype_list[i]])            
+                    i+=1 
 
                 if len(landusetype_list)==0:
                     landusetype_list.append(instance.landuse_type_id)
