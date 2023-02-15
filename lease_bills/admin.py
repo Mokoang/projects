@@ -21,6 +21,7 @@ from django.urls import include, path
 from registered.models import lease,Landuse_Type,alter_LandUse
 
 
+
 # lease Form
 class referencetableForm(forms.ModelForm ):
     
@@ -61,12 +62,13 @@ class rtAdminResource(resources.ModelResource):
 
 @admin.register(reference_table)        
 class referencetableAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+  
   form               = referencetableForm
   list_display       = ['record_date','landuse_type','zone_number','period','fixed_rate','Penalty']
   ordering           = ["-record_date","-period",]
   resource_class     = rtAdminResource        
-  search_fields  = ['record_date','landuse_type__landuse','zone_number','period','fixed_rate','penalty']
-  list_per_page  = 10
+  search_fields      = ['record_date','landuse_type__landuse','zone_number','period','fixed_rate','penalty']
+  list_per_page      = 10
 
   class Meta:
     model = reference_table
@@ -134,7 +136,7 @@ class invoiceAdmin(admin.ModelAdmin):
   ordering = ['-billing_date']
   
   search_help_text = 'type invoice number'
-  search_fields = ['billing_date','bill_description','invoice_number','lease_number__lease_number','Balance']
+  search_fields = ['billing_date','bill_description','invoice_number','lease_number__lease_number']
   list_per_page = 10
 
   class Meta:

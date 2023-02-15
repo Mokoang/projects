@@ -4,6 +4,10 @@ from registered.models import lease
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
 
+def index(request):
+    return render(request,"registered/dashboard.html")
+    
+
 """ def registration(request):
     return render(request,"registered/registered.html")
 

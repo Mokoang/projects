@@ -18,8 +18,15 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.urls import include, path
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.admin.templatetags import admin_modify
 
-
+submit_row = admin_modify.submit_row
+def submit_row_custom(context):
+    ctx = submit_row(context)
+    ctx['show_save_and_add_another'] = False
+    ctx['show_save_and_continue'] = False
+    return ctx
+admin_modify.submit_row = submit_row_custom
 
 # lease Form
 class leaseForm( forms.ModelForm ):
@@ -112,7 +119,7 @@ class slAdminResource(resources.ModelResource):
   lease_number   = Field(attribute='lease_number', column_name = 'Lease number')
   comments       = Field(attribute='comments', column_name = 'Comments')
   lease_number   = Field(column_name='Lease number', attribute='lease_number', widget=ForeignKeyWidget(lease, field='lease_number'))
-  
+
   class Meta:  
     model = surrendered_lease
     fields = ('surrender_date','lease_number','comments')
@@ -142,17 +149,10 @@ class slAdminResource(resources.ModelResource):
     return skip
 
 
-
-class adjusted_areasForm( forms.ModelForm ):
-  comments = forms.CharField(widget=forms.Textarea, required=False)
-  class Meta:
-      model = adjusted_area
-      fields = '__all__'
-
-
 class alter_landuseForm( forms.ModelForm ):
   comments              = forms.CharField(widget=forms.Textarea, required=False)
   proposed_land_use     = forms.ModelChoiceField(queryset=Landuse_Type.objects.filter(~Q(landuse = alter_LandUse.proposed_land_use)))
+
   class Meta:
       model = alter_LandUse
       fields = '__all__'        
@@ -162,6 +162,49 @@ class Landuse_choicesForm( forms.ModelForm ):
   class Meta:
     model = Landuse_Type
     fields = '__all__'        
+
+class adjustareaAdminResource(resources.ModelResource):
+
+  record_date    = Field(attribute='record_date', column_name = 'Record date', widget = DateWidget("%d/%m/%Y"))
+  comments       = Field(attribute='comments', column_name = 'Comments')
+  lease_number   = Field(column_name='Lease number', attribute='lease_number', widget=ForeignKeyWidget(lease, field='lease_number'))
+  proposed_area  = Field(column_name='Area', attribute='proposed_area')
+  area_units     = Field(column_name='Units',attribute='area_units') 
+
+  class Meta:
+    model = adjusted_area
+    fileds = ('record_date','lease_number','proposed_area','area_units','comments')
+    export_order = ('record_date','lease_number','proposed_area','area_units','comments')
+    exclude = ('id','description',)
+    import_id_fields = ('lease_number',)
+
+class alterlanduseAdminResource(resources.ModelResource):
+
+  record_date    = Field(attribute='record_date', column_name = 'Record date', widget = DateWidget("%d/%m/%Y"))
+  lease_number   = Field(column_name='Lease number', attribute='lease_number', widget=ForeignKeyWidget(lease, field='lease_number'))
+  comments       = Field(attribute='comments', column_name = 'Comments')
+  proposed_land_use = Field(column_name='Proposed Landuse', attribute='proposed_land_use', widget=ForeignKeyWidget(Landuse_Type, field='landuse'))
+  
+  skip_unchanged = True
+  report_skipped = True
+
+  def after_save_instance(self, instance, using_transactions, dry_run):
+    # the model instance will have been saved at this point, and will have a pk
+    print(instance.pk)
+
+
+  class Meta:
+    model = alter_LandUse
+    fileds = ('record_date','lease_number','proposed_land_use','comments')
+    export_order = ('record_date','lease_number','proposed_land_use','comments')
+    exclude = ('description',)
+    import_id_fields = ('id')
+   
+class adjusted_areasForm( forms.ModelForm ):
+  comments = forms.CharField(widget=forms.Textarea, required=False)
+  class Meta:
+      model = adjusted_area
+      fields = '__all__'
 
 
 
@@ -264,11 +307,12 @@ class surrenderedleaseAdmin(ImportExportModelAdmin,admin.ModelAdmin):
 
     
 @admin.register(adjusted_area)        
-class adjustedreasAdmin(admin.ModelAdmin):
+class adjustedreasAdmin(ImportExportModelAdmin, admin.ModelAdmin):
   form=adjusted_areasForm
   list_display = ('lease_number','Description','Area', 'record_date')
   exclude = ('description',)
-
+  search_fields = ('lease_number__lease_number', 'proposed_area','area_units','comments','record_date')
+  resource_class = adjustareaAdminResource
   def Description(self,obj):
     return obj.description
   
@@ -296,10 +340,12 @@ def hello():
   return 'hello world'
 
 @admin.register(alter_LandUse)        
-class alterLandUseAdmin(admin.ModelAdmin):
+class alterLandUseAdmin(ImportExportModelAdmin, admin.ModelAdmin):
   form         = alter_landuseForm
   list_display = ('lease_number', 'Description','proposed_land_use','record_date')
-  exclude = ('description',)     
+  exclude = ('description',)
+  search_fields = ('lease_number__lease_number','proposed_land_use__landuse','comments','record_date',)
+  resource_class = alterlanduseAdminResource
   
   def Description(self,obj):
     return obj.description

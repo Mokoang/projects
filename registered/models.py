@@ -7,7 +7,7 @@ from django.db import connection
 from django.core.exceptions import ValidationError
 import logging
 from datetime import  date
-
+from django.contrib.auth.models import UserManager
 logger = logging.getLogger(__name__)
 # Create your models here.
 #Lease details
@@ -107,9 +107,10 @@ class adjusted_area(Model):
                                 found = True
                     if not found:       
                         cursor.execute("INSERT INTO registered_adjusted_area (proposed_area,area_units,lease_number_id,record_date,comments,description) VALUES (%s,%s,%s,%s,%s,%s)",[instance.area,instance.area_units,instance.pk,instance.registration_date,'','Initial'])
-            
-            cursor.execute("UPDATE registered_lease SET area = %s, area_units= %s  WHERE lease_number = %s",[self.proposed_area,self.area_units,self.lease_number.lease_number])
-        super(adjusted_area,self).save(*args,*kwargs)
+            super(adjusted_area,self).save(*args,*kwargs)                
+            for dataset in  adjusted_area.objects.all().filter(lease_number = self.lease_number).order_by('-record_date')[:1]:
+                cursor.execute("UPDATE registered_lease SET area = %s, area_units= %s  WHERE id = %s",[dataset.proposed_area,dataset.area_units,dataset.lease_number_id])
+        
 
 class alter_LandUse(Model):
     lease_number        = models.ForeignKey(lease,on_delete=models.CASCADE,limit_choices_to=Q(lease_status='A'))
@@ -135,6 +136,21 @@ class alter_LandUse(Model):
                     if not found:       
                         cursor.execute("INSERT INTO registered_alter_landuse (proposed_land_use_id,lease_number_id,record_date,comments,description) VALUES (%s,%s,%s,%s,%s)",[instance.landuse_type.pk,instance.pk,instance.registration_date,'','Initial'])
 
-            cursor.execute("UPDATE registered_lease SET landuse_type_id = %s WHERE lease_number = %s",[self.proposed_land_use.id,self.lease_number.lease_number])
-        super(alter_LandUse,self).save(*args,*kwargs)
+            super(alter_LandUse,self).save(*args,*kwargs)
+            landuseid = 0
+            leasenumberid = 0
+            for dataset in  alter_LandUse.objects.all().filter(lease_number = self.lease_number).order_by('-record_date')[:1]:
+                cursor.execute("UPDATE registered_lease SET landuse_type_id = %s WHERE id = %s",[dataset.proposed_land_use_id,dataset.lease_number_id])
+            
+class customUserManager(UserManager):
+    def _create_user (self,email,password, **extra_fields):
+        if not email:
+            raise ValueError("You have not provided a valid email address!")
+
+        email = self.normalize_email(email)
+        user  =  self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using = self._db)
+
+        return user
 

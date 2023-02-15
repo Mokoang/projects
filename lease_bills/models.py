@@ -147,7 +147,7 @@ class Bill(Model):
                                 therecorddate_list.append(area_data.record_date)
 
                     else:#initial insertio
-                        if landuse_data.description=='Initial':
+                        if area_data.description=='Initial':
                             thearea_list.append(area_data.proposed_area)
                             theareaunit_list.append(instance.area_units)
                             therecorddate_list.append(area_data.record_date)
@@ -175,7 +175,7 @@ class Bill(Model):
 
                 landusetype_list = []
                 recorddate_list  = []
-                cursor.execute("INSERT INTO testing (name,description) VALUES (%s,%s)",["lease number",instance.lease_number])
+                
 
                 for landuse_data in alter_LandUse.objects.all().filter(lease_number_id = instance.id).order_by('record_date'):
                     if(len(landusetype_list)>0):# insertion 2,3,4,5 etc
@@ -231,10 +231,7 @@ class Bill(Model):
                                 landusetype_list.append(landuse_data.proposed_land_use_id)
                                 recorddate_list.append(landuse_data.record_date) 
 
-                i=0
-                for dt in landusetype_list:
-                    cursor.execute("INSERT INTO testing (name,description) VALUES (%s,%s)",[recorddate_list[i],landusetype_list[i]])            
-                    i+=1 
+
 
                 if len(landusetype_list)==0:
                     landusetype_list.append(instance.landuse_type_id)
@@ -320,7 +317,9 @@ class Bill(Model):
                                 count+=1
                     else:
                         done = True        
-
+                cursor.execute("INSERT INTO testing (name,description) VALUES (%s,%s)",["lease number",instance.lease_number])    
+                for key,value in dict_area.items():
+                    cursor.execute("INSERT INTO testing (name,description) VALUES (%s,%s)",[key,value])    
                 #now we are dow with dictionery that has a key as a year and value as land type for that year....
 
                 i = 0
