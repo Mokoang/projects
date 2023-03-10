@@ -51,7 +51,9 @@ INSTALLED_APPS = [
     'mathfilters',
     'registered.apps.RegisteredConfig',
     'lease_bills.apps.LeaseBillsConfig',
+    'user_accounts.apps.UserAccountsConfig',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -62,7 +64,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
+    
 ]
+
+
 SESSION_COOKIE_EXPIRE_AT_BROWSER_CLOSE = True
 #SESSION_COOKIE_AGE = 300 #close session after 5 minutes of inactivity
 
@@ -78,7 +83,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates/')],
+        'DIRS': [os.path.join(BASE_DIR, 'registered/templates/'),os.path.join(BASE_DIR, 'user_accounts/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -86,10 +91,17 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                
             ],
+           # 'libraries':{
+           #     'customFilter': 'registered.templatetags.algorithms_tags',
+           # }
         },
     },
 ]
+
+TEMPLATE_LOADERS = ('django.template.loaders.app_directories.load_template_source',
+)
 
 WSGI_APPLICATION = 'Billing.wsgi.application'
 
@@ -125,6 +137,19 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+]
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.ScryptPasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+    'django.contrib.auth.hashers.MD5PasswordHasher',
+    'django.contrib.auth.hashers.UnsaltedSHA1PasswordHasher',
+    'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
 ]
 
 
@@ -237,7 +262,7 @@ JAZZMIN_SETTINGS = {
     "hide_models": [],
 
     # List of apps (and/or models) to base side menu ordering off of (does not need to contain all apps/models)
-    "order_with_respect_to": ["auth", "books", "books.author", "books.book"],
+    "order_with_respect_to": ["user_accounts", "registered","registered.landuse_type", "registered.lease", "registered.surrendered_lease","registered.alter_LandUse","registered.adjusted_area","lease_bills","lease_bills.reference_table","lease_bills.verification","lease_bills.correction","lease_bills.bill"],
 
     # Custom links to append to app groups, keyed on app name
     "custom_links": {
@@ -261,10 +286,14 @@ JAZZMIN_SETTINGS = {
         "registered.alter_LandUse":"fas fa-certificate",
         "registered.landuse_type":"fas fa-check-double",
         "lease_bills.reference_table":"	fas fa-archive",
+        "lease_bills.correction":"	fas fa-edit",
+        "lease_bills.verification":"	fas fa-certificate",
         "lease_bills.bill":" fas fa-receipt",
         "lease_bills": "fas fa-dollar-sign",
-        "lease_bills.bill_finale": "fas 	fa-calendar-alt",
-        "registered": "fas fa-registered",
+        "lease_bills.bill_finale": "fas fa-calendar-alt",
+        "registered": "fas fa-users",
+        "user_accounts":"fas fa-users-cog",
+        "user_accounts.user":"fas fa-users"
     },
     # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",

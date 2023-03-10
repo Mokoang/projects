@@ -1,6 +1,6 @@
 from django.contrib import admin
 from search_placeholder import ModelAdmin
-from .models import reference_table, Bill,Bill_details,Bill_finale
+from .models import reference_table, Bill,Bill_details,verification,correction,Bill_dataset
 from django import forms
 from django_select2 import forms as s2forms
 from django.db.models import Q
@@ -19,46 +19,10 @@ from django.urls import reverse
 from django.views.generic.detail import DetailView
 from django.urls import include, path
 from registered.models import lease,Landuse_Type,alter_LandUse
+from .forms import referencetableForm,lvForm,invoiceForm,lcForm
+from .resources import rtAdminResource
 
 
-
-# lease Form
-class referencetableForm(forms.ModelForm ):
-    
-    class Meta:
-        model = reference_table
-        fields = ['landuse_type','zone_number','period','fixed_rate','penalty']
-
-class BillFinaleForm(forms.ModelForm ):
-    description =forms.CharField(widget=forms.Textarea, required=False)
-    class Meta:
-        model = Bill_finale
-        fields = ['closing_date','description']
-
-
-class invoiceForm(forms.ModelForm):
-
-  class Meta:
-    model   = Bill
-    fields = ['billing_date','bill_description','lease_number','balance']
-    exclude = ['lease_number','balance']
-
-
-#This class is used to define the import / export functions
-class rtAdminResource(resources.ModelResource):
-  landuse_type        = Field(column_name='Lease number',attribute='landuse_type', widget=ForeignKeyWidget(Landuse_Type, field='landuse')) 
-  zone_number         = Field(attribute='zone_number', column_name = 'Zone Number')
-  fixed_rate          = Field(attribute='fixed_rate', column_name = 'Fixed Rate')
-  penalty             = Field(attribute='penalty', column_name = 'Penalty (%)')
-
-  class Meta:  
-    model            = reference_table
-    fields           = ('landuse_type','zone_number','fixed_rate','penalty','period')
-    export_order     = ('landuse_type','zone_number','fixed_rate','penalty','period')
-    exclude          = ('id',)
-    import_id_fields = ('landuse_type','zone_number','period')
-    skip_unchanged   = True
-    report_skipped   = True
 
 @admin.register(reference_table)        
 class referencetableAdmin(ImportExportModelAdmin, admin.ModelAdmin):
@@ -109,6 +73,7 @@ class invoiceView(PermissionRequiredMixin, DetailView):
         "bill_details": Bill_details.objects.all(),
         "thelease":lease.objects.all(),
     }
+
 
 class detailsView(PermissionRequiredMixin, DetailView):
   permission_required = "lease_bills.view_invoice"
@@ -179,28 +144,42 @@ class invoiceAdmin(admin.ModelAdmin):
   def has_delete_permission(self, request, obj=None):
     return False
     
+@admin.register(verification)        
+class lvAdmin( admin.ModelAdmin):
+  form = lvForm
+  list_display = ['verification_date','period','comments','bill_dataset']
 
-@admin.register(Bill_finale)
-class invoiceAdmin(admin.ModelAdmin):
-  form = BillFinaleForm
-  list_display = ['closing_date','period','description']
-  ordering = ['closing_date']
-  
-  search_fields = ['closing_date','period','description']
-  list_per_page = 10
-
-  class Meta:
-    model = Bill_finale
-
-  def has_change_permission(self, request, obj=None):
-    return False
+  class  Meta:
+    model = verification
 
   def has_delete_permission(self, request, obj=None):
-    return False
+      return False
+        
+  def has_change_permission(self, request, obj=None):
+      return False 
+
+
+admin.site.register(Bill_dataset)
+"""
+@admin.register(correction)        
+class lcAdmin(admin.ModelAdmin):
+  form = lcForm
+  list_display = ['correction_date','period','comments','correction_status']
+
+  class  Meta:
+    model = correction
+
+  def has_add_permission(self, request, obj=None):
+    verified  = False
+    for data in verification.objects.all():
+      if data.period == date.today().year :
+        verified = True
     
-
-  class Media:
-    js = ('//ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js', # jquery
-            'registered/js/billfinale.js',   # app static folder
-        )
-
+    return verified
+    
+  def has_delete_permission(self, request, obj=None):
+      return False
+        
+  def has_change_permission(self, request, obj=None):
+      return False         
+"""

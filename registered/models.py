@@ -29,7 +29,6 @@ STATUS = (
     ('A','Active'),
     ('I','Inactive'),
 )
-
 import datetime
 
 def year_choices():
@@ -58,6 +57,9 @@ class lease(Model):
     lastpayment_period  = models.IntegerField( choices=[(r,r) for r in range(1900, datetime.date.today().year+1)], blank=True,default=0,null=True) 
     registration_date   = models.DateField(auto_now = False,default=date.today)
     lastpayment_date    = models.DateField(blank=True,null=True)
+    verified            = models.BooleanField(default=False)
+    correction_state    = models.BooleanField(default=True)
+    billdata            = models.BooleanField(default=False)
 
     def __str__(self):
         return self.lease_number

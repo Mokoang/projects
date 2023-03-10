@@ -1,0 +1,204 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block content_title %} {% trans 'Dashboard' %} {% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item">{% trans 'Dashboard' %}</li>
+    </ol>
+{% endblock %}
+
+
+{% block content %}
+    {% get_side_menu using="app_list" as dashboard_list %}
+    {% if dashboard_list %}
+        {% widthratio dashboard_list|length 2 1 as middle %}
+    {% endif %}
+{% load algorithms_tags %}
+    <div class="col-lg-12 col-12">
+        <div class="row"> 
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2" style="border-left: 4px solid green">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Registerd Leases </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{% total_leases%}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-landmark fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2" style="border-left: 4px solid red">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Surrendered Leases</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{% surrendered_leases %}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-ban fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2" style="border-left: 4px solid yellow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Land-use Types</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{% total_landuse %}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-double fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2" style="border-left: 4px solid blue">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Zones</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">6</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-area fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+     </div>
+     <div class="row">
+                    <!-- Area Chart -->
+                    <div class="col-xl-4 col-lg-4">
+                    <div class="card shadow mb-4">
+                        <!-- Card Header - Dropdown -->
+                        <div
+                            class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                          
+                                Registerd Leases
+                            </h6>
+                        </div>
+                        <!-- Card Body -->
+                        <div class="card-body">
+                            <div class="chart-area">
+                                <canvas id="myAreaChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <!-- Pie Chart -->
+            <div class="col-xl-8 col-lg-8">
+                <div class="card shadow mb-4">
+                    <!-- Card Header - Dropdown -->
+                    <div
+                        class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">Leases Report  </h6>
+                    </div>
+                    <div>
+                        <canvas id="myChart"></canvas>
+                        </div>
+                    </div>
+     </div> 
+    </div>  
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx  = document.getElementById('myChart');
+const ctx1 = document.getElementById('myAreaChart');
+
+data = {
+    labels: ['Registered Lease', 'Surrendered Lease'],
+    datasets: [{
+        label: 'leases',
+        data: [{% active_leases %},{% surrendered_leases %}],
+        borderWidth: 1
+    }]
+    }
+new Chart(ctx1, {
+    type: 'doughnut',
+    data: data,
+    options: {
+        animation: {
+             animateScale: true
+        }
+    }
+}); 
+
+
+new Chart(ctx, {
+        type: 'line',
+        data: {
+        labels: {% graph_labels %},
+        datasets: [{
+            label: 'Leases Registered',
+            data:{% graph_data %},
+            borderWidth: 3
+        }]
+        },
+        options: {
+     
+        scales: {
+            y: {
+            beginAtZero: true
+            }
+        },
+        transitions: {
+      show: {
+        animations: {
+          x: {
+            from: 0
+          },
+          y: {
+            from: 0
+          }
+        }
+      },
+      hide: {
+        animations: {
+          x: {
+            to: 0
+          },
+          y: {
+            to: 0
+          }
+        }
+      }
+    }
+        }
+    });
+    
+const plugin = {
+    id: 'customCanvasBackgroundColor',
+    beforeDraw: (chart, args, options) => {
+    const {ctx} = chart;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = options.color || '#99ffff';
+    ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.restore();
+  }
+};   
+</script>
+                        
+
+{% endblock %}
