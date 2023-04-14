@@ -1,3 +1,4 @@
+"""
 from django import forms
 from .models import user_permission,user
 from django.contrib.auth.models import Permission
@@ -124,3 +125,4 @@ class changeuserForm (forms.ModelForm):
     class Meta:
         model = user
         exclude = ("password","is_superuser",)
+"""

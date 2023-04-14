@@ -1,0 +1,69 @@
+{% extends 'admin/base_site.html' %}
+{% block content %}
+{% load my_tags %}
+<div class=" col-md-12" style="background-color: white;margin:10px;padding: 40px;height: 100vh;">
+    <center><h1>LEASE-REPORT</h1></center><br/>
+    <div class="container col-md-12  form-inline" >
+        <div class="mb-3 col-md-4  form-inline">
+            <label for="exampleFormControlInput1" class="form-label">Start-Date</label>
+            <input type="date" class="form-control" id="startdate">
+          </div>
+          <div class="mb-3  col-md-4 form-inline float-right">
+            <label for="exampleFormControlInput1" class="form-label">End-Date</label>
+            <input type="date" class="form-control" id="enddate">
+          </div>  
+          <div class="mb-3  col-md-4 form-inline float-right">
+             <button type="button" id="search" class="btn btn-primary">Submit</button>
+             <button type="button" id="search" class="btn btn-success" style="margin-left: 10px;">Print</button>
+            </div>
+        </div><br/>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="option1">
+            <label class="form-check-label" for="inlineCheckbox1">Table</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="inlineCheckbox2" value="option2">
+            <label class="form-check-label" for="inlineCheckbox2">Bar-Chart</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="option1">
+            <label class="form-check-label" for="inlineCheckbox1">Line-Chart</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="inlineCheckbox2" value="option2">
+            <label class="form-check-label" for="inlineCheckbox2">Pie-Chart</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="option1">
+            <label class="form-check-label" for="inlineCheckbox1">Dotted</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="inlineCheckbox2" value="option2">
+            <label class="form-check-label" for="inlineCheckbox2">Doughnut-Chart</label>
+          </div>
+        <br/><br/>
+        <div class="container col-md-12  form-inline">
+            <table class="table table-dark" id="table_">
+              </table>
+        </div>
+            
+</div><script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+
+<script>
+
+    $(function(){
+        $('#search').on('click',function(){
+            start = $('#startdate').val();
+            end   = $('#enddate').val();
+
+            var getit  = {% regiteredleases %};
+            //var dd = {{getit}};
+            $('#table_').append("<thead><th>Period</th><th>Regitered-Leases </th><th>Unregistered-Leases</th></thead>");
+            for (var key in getit){
+                $('#table_').append("<tr><td>"+key+"</td><td>"+getit[key]+"</td><td>0</td></tr>");   
+              }
+        });
+    });
+
+</script>
+{% endblock %}

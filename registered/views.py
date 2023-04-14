@@ -6,7 +6,29 @@ from django.views.decorators.csrf import csrf_exempt
 
 def index(request):
     return render(request,"registered/dashboard.html")
-    
+
+
+# in views.py
+from django.db.models import Sum
+from slick_reporting.views import SlickReportView
+from slick_reporting.fields import SlickReportField
+from .models import lease
+
+class TotalProductSales(SlickReportView):
+
+    report_model = lease
+    date_field = 'registration_date'
+    group_by = 'lease_number'
+    columns = ['lease_number',]
+
+    chart_settings = [{
+        'type': 'column',
+        'data_source': ['lease_number'],
+        'plot_total': False,
+        'title_source': 'title',
+
+    }, ]
+
 
 """ def registration(request):
     return render(request,"registered/registered.html")

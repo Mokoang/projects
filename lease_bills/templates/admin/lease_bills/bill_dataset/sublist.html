@@ -1,0 +1,12 @@
+
+    <tr>
+      {% for item in data %}
+      <th scope="row"><input type="checkbox" /></th>
+      <td>{{item.registration_date}}</td>
+      <td>{{item.lastpayment_date}}</td>
+      <td>{{item.lease_number}}</td>
+      <td>{{item.landuse_type}}</td>
+      <td>{{item.zone_number}}</td>
+      <td>{{item.area}} {{item.area_units}}</td>
+    </tr>
+    {% endfor %}   

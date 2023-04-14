@@ -15,10 +15,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-import registered 
+import registered
+from django.views.generic import TemplateView 
+from lease_bills import views as bill_views
+#import reporting
+
+#reporting.autodiscover() 
+
 
 urlpatterns = [
-     #path('', include('admin_soft.urls')),
+    #path('', include('admin_soft.urls')),
     path('', admin.site.urls),
-    #path('dash/', include('registered.urls')),
+    path('hello/', include('lease_bills.urls')),
 ]

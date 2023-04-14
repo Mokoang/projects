@@ -1,0 +1,86 @@
+<html>
+    <body>
+<div id="content-main" class="col-12">
+    <div class="container float-right "style="margin-bottom:20px"><button type="button" class="btn btn-primary float-right" id="save">Save</button></div>
+    <table class="table table-striped"id="myTable">
+        <thead>
+          <tr>
+            <th scope="col"><input type="checkbox" /></th>
+            <th scope="col">Reg. Date</th>
+            <th scope="col">LastPayment Date</th>
+            <th scope="col">Lease number</th>
+            <th scope="col">Landuse type</th>
+            <th scope="col">Zone</th>
+            <th scope="col">Area</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% all_leases %}
+        </tbody>
+      </table>
+</div>
+<div id="hello">
+    </div>
+<style>
+    table { 
+        box-shadow: 1px 1px 1px 1px #999;
+        border-collapse:separate;
+        border-radius:6px;
+      }
+</style>
+<!-- DataTable -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/s/bs/dt-1.10.10,r-2.0.0/datatables.min.js"></script>
+
+<script>
+    function getCookie(name) {
+
+var cookieValue = null;
+
+if (document.cookie && document.cookie !== "") {
+
+var cookies = document.cookie.split(";");
+
+for (var i = 0; i < cookies.length; i++) {
+
+var cookie = jQuery.trim(cookies[i]);
+
+// Does this cookie string begin with the name we want?
+
+if (cookie.substring(0, name.length + 1) === name + "=") {
+
+  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+
+  break;
+
+}
+
+}
+
+}
+
+return cookieValue;
+
+}
+
+var csrftoken = getCookie("csrftoken");
+
+console.log(csrftoken);
+
+var headers = { "x-CSRFToken": csrftoken };
+
+    $(function(){
+        $('#save').on('click',function(){
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'post_data' %}",
+                data: {csrfmiddlewaretoken: '{{ csrf_token }}',hey:'hello' },
+                success:function(data){
+                    alert(data);
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

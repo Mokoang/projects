@@ -43,21 +43,21 @@ class LeaseAdminResource(resources.ModelResource):
     if not isinstance(float(instance.area),float) or float(instance.area)<=0:
       skip = True 
     
-
     #chekc the area units...
     
     if instance.area_units!='m\u00b2' or instance.area_units=='':
       skip = True
-
     
     #check the zone number
     if int(instance.zone_number)<1 or int(instance.zone_number)>6:
       skip = True 
     
     #check the land use
+    
     found = False
+    landus = instance.landuse_type.landuse
     for instance2 in Landuse_Type.objects.all():
-      if instance.landuse_type == instance2.landuse:
+      if  landus == instance2.landuse:
         found = True
 
     if not found:

@@ -46,12 +46,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'import_export',
     'search_placeholder',
     'mathfilters',
-    'registered.apps.RegisteredConfig',
+    'import_export',
+    'Report',
+    'registered',
     'lease_bills.apps.LeaseBillsConfig',
     'user_accounts.apps.UserAccountsConfig',
+    'admin_extra_buttons',
+    
 ]
 
 
@@ -83,7 +86,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'registered/templates/'),os.path.join(BASE_DIR, 'user_accounts/templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'registered/templates/'),os.path.join(BASE_DIR, 'user_accounts/templates'),os.path.join(BASE_DIR, 'Report/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -93,9 +96,9 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 
             ],
-           # 'libraries':{
-           #     'customFilter': 'registered.templatetags.algorithms_tags',
-           # }
+            'libraries':{
+                'customFilter': 'registered.templatetags.algorithms_tags',
+            }
         },
     },
 ]
@@ -138,7 +141,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
@@ -151,7 +153,6 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.UnsaltedSHA1PasswordHasher',
     'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
@@ -285,26 +286,28 @@ JAZZMIN_SETTINGS = {
         "registered.adjusted_area":"fas fa-chart-area",
         "registered.alter_LandUse":"fas fa-certificate",
         "registered.landuse_type":"fas fa-check-double",
-        "lease_bills.reference_table":"	fas fa-archive",
+        "lease_bills.reference_table":"fas fa-table",
         "lease_bills.correction":"	fas fa-edit",
         "lease_bills.verification":"	fas fa-certificate",
         "lease_bills.bill":" fas fa-receipt",
         "lease_bills": "fas fa-dollar-sign",
         "lease_bills.bill_finale": "fas fa-calendar-alt",
-        "registered": "fas fa-users",
+        "lease_bills.bill_dataset": "fas fa-database",
+        "lease_bills.billdata": "fas  fa-server",
+        "lease_bills.billing_period": "fas fa-calendar-day",
+        "registered": "fas fa-database",
         "user_accounts":"fas fa-users-cog",
-        "user_accounts.user":"fas fa-users"
+        "user_accounts.user":"fas fa-users",
+        "Report":"fas fa-chart-bar",
     },
     # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
-
     #################
     # Related Modal #
     #################
     # Use modals instead of popups
     "related_modal_active": False,
-
     #############
     # UI Tweaks #
     #############

@@ -1,19 +1,16 @@
+"""
 from django.db import models
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import AbstractBaseUser,Permission,User
 from datetime import  date
-
 from django.db import connection
 import base64
 import hashlib
 import secrets
 from passlib.hash import django_bcrypt_sha256 #django_pbdfk2_sha256
 
-
 ALGORITHM = "pbkdf2_sha256"
-
-
 
 from django.contrib import admin
 from django.forms import CheckboxSelectMultiple
@@ -31,7 +28,7 @@ class user(AbstractBaseUser):
     user_name           = models.CharField(max_length=100, unique=True)
     email               = models.EmailField(unique=True)
     role                = models.CharField(max_length=100)
-    last_login          = models.DateField(blank=True,default=date.today())
+    last_login          = models.DateField(blank=True,default=date.today)
     is_staff            = models.BooleanField(default=True)
     is_active           = models.BooleanField(default=False)
     is_superuser        = models.BooleanField(default=False)
@@ -184,7 +181,5 @@ class user_permission(models.Model):
                         cursor.execute("INSERT INTO auth_user_user_permissions (user_id, permission_id) VALUES (%s,%s)",[id,ldata])
                                                         
         super(user_permission,self).save(*args,*kwargs) 
-
-
-
+"""
 

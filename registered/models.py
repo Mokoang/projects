@@ -67,21 +67,29 @@ class lease(Model):
 
     class Meta:
         verbose_name = 'Lease'
-        verbose_name_plural = 'Leases'        
+        verbose_name_plural = 'Leases' 
+
+    def save(self,*args,**kwargs):
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO lease_bills_billdata (lease_number,zone_number,area,area_units,lease_status,lastpayment_period,registration_date,lastpayment_date,billdata,landuse_type_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",[self.lease_number,self.zone_number,self.area,self.area_units,self.lease_status,self.lastpayment_period,self.registration_date,self.lastpayment_date,False,self.landuse_type_id])
+        super(lease,self).save(*args,*kwargs)
+           
 
 #surrendered lease model
 class surrendered_lease(Model):
-    lease_number        = models.OneToOneField(lease,on_delete=models.CASCADE,unique=True,primary_key=True)
+    lease_number        = models.OneToOneField(lease,on_delete=models.CASCADE,unique=True,primary_key=True,limit_choices_to=Q(lease_status='A'))
     surrender_date      = models.DateField(auto_now = False,default=date.today)
     comments            = models.CharField(max_length=500,default="No comment")
 
     class Meta:
-        verbose_name = 'Surrender Lease'
+        verbose_name = 'Surrender Lease '
         verbose_name_plural = 'Surrender Leases'
-#update lease Status in lease table when we save the record in surrendered lease..
+    #update lease Status in lease table when we save the record in surrendered lease..
     def save(self,*args,**kwargs):
         with connection.cursor() as cursor:
             cursor.execute("UPDATE registered_lease SET lease_status = 'I' WHERE lease_number = %s",[self.lease_number.lease_number])
+            cursor.execute("UPDATE lease_bills_billdata SET lease_status = 'I' WHERE lease_number = %s",[self.lease_number.lease_number])
+
         super(surrendered_lease,self).save(*args,*kwargs)
 
 
@@ -112,6 +120,7 @@ class adjusted_area(Model):
             super(adjusted_area,self).save(*args,*kwargs)                
             for dataset in  adjusted_area.objects.all().filter(lease_number = self.lease_number).order_by('-record_date')[:1]:
                 cursor.execute("UPDATE registered_lease SET area = %s, area_units= %s  WHERE id = %s",[dataset.proposed_area,dataset.area_units,dataset.lease_number_id])
+                cursor.execute("UPDATE lease_bills_billdata SET area = %s, area_units= %s  WHERE lease_number = %s",[dataset.proposed_area,dataset.area_units,dataset.lease_number.lease_number])
         
 
 class alter_LandUse(Model):
@@ -122,7 +131,7 @@ class alter_LandUse(Model):
     comments            = models.CharField(max_length=500,default="No comment")
 
     class Meta:
-        verbose_name = 'Change Land use'
+        verbose_name        = 'Change Land use'
         verbose_name_plural = 'Change Land use'    
 
     #update land use in lease table when we save the record in land use..
@@ -142,7 +151,8 @@ class alter_LandUse(Model):
             landuseid = 0
             leasenumberid = 0
             for dataset in  alter_LandUse.objects.all().filter(lease_number = self.lease_number).order_by('-record_date')[:1]:
-                cursor.execute("UPDATE registered_lease SET landuse_type_id = %s WHERE id = %s",[dataset.proposed_land_use_id,dataset.lease_number_id])
+                cursor.execute("UPDATE registered_lease     SET landuse_type_id = %s WHERE id = %s",[dataset.proposed_land_use_id,dataset.lease_number_id])
+                cursor.execute("UPDATE lease_bills_billdata SET landuse_type_id = %s WHERE lease_number = %s",[dataset.proposed_land_use_id,dataset.lease_number.lease_number])
             
 class customUserManager(UserManager):
     def _create_user (self,email,password, **extra_fields):

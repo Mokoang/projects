@@ -10,9 +10,10 @@ $(document).ready(function() {
   $('input[Name="_addanother"]').hide();
   $('input[Name="_continue"]').hide();
   $('input[Name="_save"]').val("Generate Bill");
- 
- 
+  $('#add_id_window_period').hide();
+  $('#view_id_window_period').hide();
   
+ 
 /*  $('.btn-success').html(' <i class="fa fa-plus-circle"></i> Surrender Lease');
   $('#id_lease_number').on('change',function(){
     let $this = $(this);

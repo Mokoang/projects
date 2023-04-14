@@ -34,6 +34,99 @@ def year_choices():
 def current_year():
     return datetime.date.today().year
 
+STATE = (
+    ('A','Open'),
+    ('I','Close'),
+)
+class billing_period(Model):
+    record_date     = models.DateField(auto_now=True)
+    opening_date    = models.DateField(auto_now = False,default=date.today)
+    closing_date    = models.DateField(auto_now = False,default=date.today,null=True,blank=True)
+    period_state    = models.CharField(max_length=1,choices=STATE,default ="A")
+    period          = models.IntegerField( choices=[(r,r) for r in range(1900, datetime.date.today().year+2)], default=current_year)
+    window_number   = models.IntegerField(default=1)
+    bill_data_set   = models.BooleanField(default=False)
+    comments        = models.CharField(max_length=255,default='Valid')
+    
+    class Meta:
+        unique_together = ('window_number','period')
+        verbose_name = 'Billing Period'
+        verbose_name_plural = 'Billing Periods' 
+
+
+    def __str__(self):
+        return str(self.period)+'-'+str(self.window_number)
+     
+    def save(self,*args,**kwargs):
+        with connection.cursor() as cursor:
+            saved = False
+            closed = False
+            open = True
+            window_number = 0
+            for instance in billing_period.objects.all().filter(period = self.period).order_by("-id")[:1]:
+                saved = True
+                window_number = instance.window_number
+                if instance.period_state == 'A':
+                    #close the period
+                    com = instance.comments
+                    cursor.execute("UPDATE lease_bills_billing_period SET closing_date  = %s,period_state=%s, comments =%s  WHERE window_number = %s and period = %s ",[date.today(),'I',com+" [Closing Comments: "+self.comments+"]",instance.window_number,self.period])
+                    cursor.execute("UPDATE lease_bills_bill_dataset SET data_state = %s where data_state = %s",['C','P'])
+                    
+                elif  instance.period_state == 'I':
+                    #open another window in this period
+                    cursor.execute("INSERT INTO lease_bills_billing_period (record_date,opening_date,period_state,period,window_number,comments) VALUES (%s,%s,%s,%s,%s,%s)",[date.today(),date.today(),'A',self.period,window_number+1," [ Opening Comments: "+self.comments+" ]"])
+                    cursor.execute("UPDATE lease_bills_billdata SET billdata = %s WHERE billdata = %s and lease_status = %s ",[False,True,'A'])
+            if not saved:
+                #open brand new window for billing_period
+                cursor.execute("INSERT INTO lease_bills_billing_period (record_date,opening_date,period_state,period,window_number,comments,bill_data_set) VALUES (%s,%s,%s,%s,%s,%s,%s)",[date.today(),date.today(),'A',self.period,window_number+1,"[ Opening Comments: "+self.comments+" ]",False])
+                cursor.execute("UPDATE lease_bills_billdata SET billdata = %s WHERE billdata = %s and lease_status = %s ",[False,True,'A'])
+                
+             
+
+UNITS=(
+    (f'm\N{SUPERSCRIPT TWO}',f'm\N{SUPERSCRIPT TWO}'),
+  
+)
+
+ZONE = (
+    (1,1),
+    (2,2),
+    (3,3),
+    (4,4),
+    (5,5),
+    (6,6),
+)
+
+STATES = (
+    ('P','Pre-commit'),
+    ('C','Commit'),
+    ('D','Deleted'),
+    )
+
+class Bill_dataset(Model):
+
+    record_date         = models.DateField(auto_now=True)
+    lease_number        = models.TextField(max_length=50,name="lease_number",validators=[MinLengthValidator(7)],blank=True)
+    area                = models.DecimalField(max_digits=10, decimal_places=2,validators=[MinValueValidator(0.01)],blank=True)
+    area_units          = models.CharField(max_length=50,default='m\N{SUPERSCRIPT TWO}',blank=True)
+    landuse_type        = models.ForeignKey(Landuse_Type,on_delete=models.CASCADE,blank=True)    
+    zone_number         = models.PositiveIntegerField (choices=ZONE,default=1,blank=True)
+    lastpayment_period  = models.IntegerField( choices=[(r,r) for r in range(1900, datetime.date.today().year+1)], blank=True,default=0,null=True) 
+    registration_date   = models.DateField(auto_now = False,default=date.today,blank=True)
+    lastpayment_date    = models.DateField(blank=True,null=True)
+    window_period       = models.ForeignKey(billing_period,on_delete=models.CASCADE,limit_choices_to=Q(bill_data_set=True),blank=True)
+    data_state          = models.CharField(max_length=1,choices=STATES,default ="P",blank=True)
+
+    class Meta:
+        verbose_name        = 'Billing Data'
+        verbose_name_plural = 'Billing Data'
+        unique_together     = ('lease_number','window_period') 
+
+    def save(self,*args,**kwargs):
+        with connection.cursor() as cursor:
+            cursor.execute ("INSERT INTO testing (name) VALUES (%s)",['I did it'])         
+            
+
 
 
 class reference_table(Model):
@@ -67,252 +160,111 @@ class reference_table(Model):
                     
                 # if for a land type recorded with similar zone number but financial year is less mthan current and price status is still active alter the status to I
                 else:
-                    cursor.execute ("UPDATE lease_bills_reference_table SET rate_status = %s WHERE  landuse_type_id = %s and zone_number = %s and period <= %s and rate_status = %s",['I',self.landuse_type.id,self.zone_number,self.period,'A'])
-            
+                    cursor.execute ("UPDATE lease_bills_reference_table SET rate_status = %s WHERE  landuse_type_id = %s and zone_number = %s and period <= %s and rate_status = %s",['I',self.landuse_type.id,self.zone_number,self.period,'A'])         
             super(reference_table,self).save(*args,*kwargs)
- 
-
 
 class Bill(Model):
-    
-    lease_number        = models.ForeignKey(lease,on_delete=models.CASCADE)
     billing_date        = models.DateField(auto_now=False,default=date.today)
-    invoice_number      = models.CharField(max_length=255)
-    bill_description    = models.CharField(max_length=255)       
-    balance             = models.DecimalField(max_digits=10, decimal_places=2,validators=[MinValueValidator(0.01)])
-
-     
-    def __str__(self):
-        return self.invoice_number
-
+    lease_number        = models.TextField(max_length=50,unique=True,name="lease_number",validators=[MinLengthValidator(7)])
+    bill_description    = models.CharField(max_length=255)
+    window_period       = models.ForeignKey(billing_period,on_delete=models.CASCADE,limit_choices_to=Q(period_state='I'))
+       
 
     class Meta:
         verbose_name = 'Lease Bill'
         verbose_name_plural = 'Lease Bills'   
-        unique_together = ('lease_number','billing_date')
     
 
     def save(self,*args,**kwargs):
         with connection.cursor() as cursor:
-
-            for instance in lease.objects.all().filter(lease_status = 'A'):
-
-                thearea_list      = []
-                theareaunit_list  = []
-                therecorddate_list= []
-
-                for area_data in adjusted_area.objects.all().filter(lease_number_id = instance.id).order_by('record_date'):
-                    if(len(thearea_list)>0):
-                        # insertion 2,3,4,5 etc
-                        #check same year changes
-                        if(therecorddate_list[len(thearea_list)-1].year==area_data.record_date.year):
-                            #check the date that is below the closing date
-
-                            if (therecorddate_list[len(thearea_list)-1] <= area_data.record_date and area_data.record_date<=self.billing_date):
-                                thearea_list[len(thearea_list)-1]=area_data.proposed_area
-                                theareaunit_list[len(thearea_list)-1]=instance.area_units
-                                therecorddate_list[len(therecorddate_list)-1]=area_data.record_date
-                        else:#diffrent year changes
-                            thearea_list.append(area_data.proposed_area)
-                            theareaunit_list.append(instance.area_units)
-                            therecorddate_list.append(area_data.record_date)
-
-                    else:#initial insertio
-                        if area_data.description=='Initial':
-                            thearea_list.append(area_data.proposed_area)
-                            theareaunit_list.append(instance.area_units)
-                            therecorddate_list.append(area_data.record_date)
-                        else:#description is another thing else
-                            thearea_list.append(area_data.proposed_area)
-                            theareaunit_list.append(instance.area_units)
-                            therecorddate_list.append(area_data.record_date) 
-                if len(thearea_list)==0:
-                    thearea_list.append(instance.area)
-                    theareaunit_list.append(instance.area_units)
-                    therecorddate_list.append(instance.registration_date)
-
-                landusetype_list = []
-                recorddate_list  = []
-                
-
-                for landuse_data in alter_LandUse.objects.all().filter(lease_number_id = instance.id).order_by('record_date'):
-                    if(len(landusetype_list)>0):# insertion 2,3,4,5 etc
-                        #check same year changes
-                        
-                        if(recorddate_list[len(landusetype_list)-1].year==landuse_data.record_date.year):
-                            
-                            #check the date that is below the closing date
-                            if (recorddate_list[len(landusetype_list)-1] <= landuse_data.record_date and landuse_data.record_date<=self.billing_date ):
-                                landusetype_list[len(landusetype_list)-1]=landuse_data.proposed_land_use_id
-                                recorddate_list[len(recorddate_list)-1]=landuse_data.record_date
-                        else:#diffrent year changes
-                            landusetype_list.append(landuse_data.proposed_land_use_id)
-                            recorddate_list.append(landuse_data.record_date)
-
-                    else:#initial insertio
-                        if landuse_data.description=='Initial':
-                            landusetype_list.append(landuse_data.proposed_land_use_id)
-                            recorddate_list.append(landuse_data.record_date)
-                        else:#description is another thing else
-                            landusetype_list.append(landuse_data.proposed_land_use_id)
-                            recorddate_list.append(landuse_data.record_date) 
-
-                if len(landusetype_list)==0:
-                    landusetype_list.append(instance.landuse_type_id)
-                    recorddate_list.append(instance.registration_date)
-                i = 0
-                
-                for dat in landusetype_list:
-                    
-                    i+=1
-
+            for instance in Bill_dataset.objects.all().filter(window_period=self.window_period).filter(data_state='C'):
                 #Get start and finish periods...
-                start_period = 0
-                end_period   = 0
+                if instance.lastpayment_period !=None:
+                    if instance.lastpayment_period<self.billing_date.year: 
+          
+                        for reference_data in reference_table.objects.all().filter(landuse_type=instance.landuse_type).filter(zone_number=instance.zone_number).filter(period=instance.window_period.period):
+                            cursor = connection.cursor()
+                            cursor.execute("select nextval('invoicenumber') ")
 
-                if instance.lastpayment_period == None:
-                    start_period = instance.registration_date.year
-                    end_period   = self.billing_date.year
+                            order_number = cursor.fetchone()
+
+                            today = datetime.date.today()
+                            year = u'%4s' % today.year
+                            month = u'%02i' % today.month
+                            day = u'%02i' % today.day
+
+                            new_number = u'%06i' % order_number
+                            newresult =  "INV-"+year+month+day+new_number
+
+                            total_amt = reference_data.fixed_rate*instance.area
+                            if self.window_period.period < self.billing_date.year:
+                                total_amt =(100+reference_data.penalty)*total_amt/100                    
+
+                            found = False  
+                            bill_id = 0                    
+                            for thedata in Bill.objects.all().filter(lease_number = instance.lease_number)[:1]:
+                                bill_id  = thedata.id
+                                found=True
+
+                            if not found:    
+                                cursor.execute("INSERT INTO lease_bills_bill (billing_date,lease_number,window_period_id,bill_description) VALUES (%s,%s,%s,%s)",[self.billing_date,instance.lease_number,self.window_period_id,self.bill_description])
+                            
+                            for adata in Bill.objects.all().filter(lease_number = instance.lease_number)[:1]:
+                                bill_id = adata.id
+
+                            detfound = False        
+                            for detdata in Bill_details.objects.all().filter(bill_id=bill_id).filter(window_period = self.window_period):
+                                detfound = True
+                            cursor.execute("INSERT INTO testing (name) VALUES (%s)",["1 = "+str(bill_id)])    
+                            if not detfound:                           
+                                cursor.execute("INSERT INTO lease_bills_bill_details (bill_id_id,window_period_id,bill_description,official_area ,area_units, penalty ,fixed_rate ,amount,landuse_type_id,zone_number) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",[bill_id,instance.window_period.id,self.bill_description,instance.area,instance.area_units,reference_data.penalty,reference_data.fixed_rate,total_amt,instance.landuse_type_id,instance.zone_number])  
                 else:
-                    start_period = (instance.lastpayment_period+1)
-                    end_period   = self.billing_date.year
+                    for reference_data in reference_table.objects.all().filter(landuse_type=instance.landuse_type).filter(zone_number=instance.zone_number).filter(period=instance.window_period.period):
 
-                #now we will set a dictionery for { period: landuse}
-                 
-                dict_landuse = {}
-                done         = False
-                index        = 0
-                count        = 0
-                temp_start   = start_period
-                temp_end     = end_period
-                count        = 0
+                                            
+                        cursor = connection.cursor()
+                        cursor.execute("select nextval('invoicenumber') ")
 
-                while not done:
-                    if temp_start<=end_period:
-                        if recorddate_list[count].year==temp_start:
-                            dict_landuse[temp_start] = landusetype_list[count]
-                            temp_start+=1
-                            if count<(len(recorddate_list)-1):
-                                count+=1
-                            
-                        elif recorddate_list[count].year>temp_start:
-                            dict_landuse[temp_start] = landusetype_list[count-1]
-                            temp_start+=1
-                        else:
-                            dict_landuse[temp_start] = landusetype_list[count]
-                            temp_start+=1
-                            if count<(len(recorddate_list)-1):
-                                count+=1    
-                    else:
-                        done = True        
+                        order_number = cursor.fetchone()
 
-                #now we will set a dictionery for { period: area}
-                dict_area         = {}
-                dict_areaunits    = {}
-                done              = False
-                index             = 0
-                count             = 0
-                temp_start        = start_period
-                temp_end          = end_period
+                        today = datetime.date.today()
+                        year = u'%4s' % today.year
+                        month = u'%02i' % today.month
+                        day = u'%02i' % today.day
 
-                while not done:
-                    if temp_start<=end_period:
-                        if therecorddate_list[count].year==temp_start:
-                            dict_area[temp_start] = thearea_list[count]
-                            dict_areaunits[temp_start] = theareaunit_list[count]
-                            temp_start+=1
-                            if count<(len(therecorddate_list)-1):
-                                count+=1
-                                
-                        elif therecorddate_list[count].year>temp_start:
-                            dict_area[temp_start] = thearea_list[count-1]
-                            dict_areaunits[temp_start] = theareaunit_list[count-1]
-                            temp_start+=1
-                            
-                        else:
-                            dict_area[temp_start] = thearea_list[count]
-                            dict_areaunits[temp_start] = theareaunit_list[count]
-                            temp_start+=1
-                            if count<(len(therecorddate_list)-1):
-                                count+=1
-                    else:
-                        done = True        
-                   
-                for key,value in dict_area.items():
-                    cursor.execute("INSERT INTO testing (name,description) VALUES (%s,%s)",[key,value])    
-                #now we are dow with dictionery that has a key as a year and value as land type for that year....
+                        new_number = u'%06i' % order_number
+                        newresult =  "INV-"+year+month+day+new_number
 
-                i = 0
-                length = len(dict_landuse)
 
-                total_amt      = 0
-                fixedrate_list = []
-                landuse_list   = []
-                zonenum_list   = []
-                area_list      = []
-                aunits_list    = []
-                period_list    = []
-                penalty_list   = []
-                amount_list    = []
-                if len(dict_landuse)>0:
+                        total_amt = reference_data.fixed_rate*instance.area
+                        if self.window_period.period < self.billing_date.year:
+                            total_amt =(100+reference_data.penalty)*total_amt/100
 
-                    
-                    for reference_data in reference_table.objects.all().filter(period__gte=start_period).filter(period__lte=end_period).order_by('period'):
+                        found = False  
+                        bill_id = 0                    
+                        for thedata in Bill.objects.all().filter(lease_number = instance.lease_number)[:1]:
+                            found=True
+                        if not found:    
+                            cursor.execute("INSERT INTO lease_bills_bill (billing_date,lease_number,window_period_id,bill_description) VALUES (%s,%s,%s,%s)",[self.billing_date,instance.lease_number,self.window_period_id,self.bill_description])
                         
-                        if i < len(dict_landuse):
-                           
-                            if reference_data.period == list(dict_landuse)[i] and reference_data.landuse_type_id==dict_landuse[list(dict_landuse)[i]] and reference_data.zone_number == instance.zone_number:
-                                
-                                if reference_data.period < self.billing_date.year:
-                                    fixedrate_list.append(reference_data.fixed_rate)
-                                    landuse_list.append(reference_data.landuse_type_id)
-                                    zonenum_list.append(reference_data.zone_number)
-                                    area_list.append(dict_area[reference_data.period])
-                                    aunits_list.append(instance.area_units)
-                                    period_list.append(reference_data.period)
-                                    penalty_list.append(reference_data.penalty)
-                                    total_amt+=round((reference_data.fixed_rate*(100+reference_data.penalty)/100)*dict_area[reference_data.period],2)
-                                    amount_list.append(round((reference_data.fixed_rate*(100+reference_data.penalty)/100)*dict_area[reference_data.period],2))
-                                    i+=1   
-                
-                                else:
-                                    fixedrate_list.append(reference_data.fixed_rate)
-                                    landuse_list.append(reference_data.landuse_type_id)
-                                    zonenum_list.append(reference_data.zone_number)
-                                    area_list.append(dict_area[reference_data.period])
-                                    aunits_list.append(instance.area_units)
-                                    period_list.append(reference_data.period)
-                                    penalty_list.append(0)
-                                    total_amt+=round(reference_data.fixed_rate*dict_area[reference_data.period],2)
-                                    amount_list.append(reference_data.fixed_rate*dict_area[reference_data.period])
-                                    i+=1
+                        for bdata in Bill.objects.all().filter(lease_number = instance.lease_number)[:1]:
+                            bill_id = bdata.id
 
-                cursor = connection.cursor()
-                cursor.execute("select nextval('invoicenumber') ")
+                        detfound = False        
+                        for detdata in Bill_details.objects.all().filter(bill_id=bill_id).filter(window_period = self.window_period):
+                            detfound = True
 
-                order_number = cursor.fetchone()
 
-                today = datetime.date.today()
-                year = u'%4s' % today.year
-                month = u'%02i' % today.month
-                day = u'%02i' % today.day
+                        cursor.execute("INSERT INTO testing (name) VALUES (%s)",["2 = "+str(bill_id)])  
+                        if not detfound:                           
+                            cursor.execute("INSERT INTO lease_bills_bill_details (bill_id_id,window_period_id,bill_description,official_area ,area_units, penalty ,fixed_rate ,amount,landuse_type_id,zone_number) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",[bill_id,instance.window_period_id,self.bill_description,instance.area,instance.area_units,reference_data.penalty,reference_data.fixed_rate,total_amt,instance.landuse_type_id,instance.zone_number])  
 
-                new_number = u'%06i' % order_number
-                newresult =  "INV-"+year+month+day+new_number                                        
-
-                cursor.execute("INSERT INTO lease_bills_bill (billing_date,invoice_number,balance,lease_number_id,bill_description) VALUES (%s,%s,%s,%s,%s)",[self.billing_date,newresult,total_amt,instance.id,self.bill_description])       
-                index = 0
-                for data in fixedrate_list:
-                    cursor.execute("INSERT INTO lease_bills_bill_details (period , official_area ,area_units, penalty , fixed_rate , amount , invoice_number , landuse_type_id,zone_number) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",[period_list[index],area_list[index],aunits_list[index],penalty_list[index],fixedrate_list[index],amount_list[index],newresult,landuse_list[index],zonenum_list[index]])
-                    index+=1
-                
-
-                
-                
+#billing detail              
 class Bill_details(Model):
     
-    invoice_number      = models.CharField(max_length=255)
-    period              = models.IntegerField( choices=[(r,r) for r in range(1900, datetime.date.today().year+2)], default=current_year)
+    bill_id             = models.ForeignKey(Bill,on_delete=models.CASCADE)
+    window_period       = models.ForeignKey(billing_period,on_delete=models.CASCADE,limit_choices_to=Q(period_state='I'))
+    bill_description    = models.CharField(max_length=255)
     official_area       = models.DecimalField(max_digits=10, decimal_places=2,validators=[MinValueValidator(0.00)])
     area_units          = models.CharField(max_length=255)
     landuse_type        = models.ForeignKey(Landuse_Type,on_delete=models.CASCADE)
@@ -320,64 +272,32 @@ class Bill_details(Model):
     fixed_rate          = models.DecimalField(max_digits=10, decimal_places=2,validators=[MinValueValidator(0.00)])
     amount              = models.DecimalField(max_digits=10, decimal_places=2,validators=[MinValueValidator(0.00)])
     zone_number         = models.PositiveIntegerField (choices=ZONE,default=1)
-            
-class verification(Model):
-    record_date         = models.DateField(auto_now=True)
-    verification_date   = models.DateField(auto_now = False,default=date.today)
-    period              = models.IntegerField( choices=[(r,r) for r in range(1900, datetime.date.today().year+2)], default=current_year,unique=True)
-    bill_dataset        = models.BooleanField(default=False)
-    comments            = models.CharField(max_length=255,default='Valid')
 
-class correction(Model):
-    record_date       = models.DateField(auto_now=True)
-    correction_date   = models.DateField(auto_now = False,default=date.today)
-    period            = models.IntegerField( choices=[(r,r) for r in range(1900, datetime.date.today().year+2)], default=current_year)
-    correction_status = models.CharField(max_length=1,choices=STATUS,default ="I") 
-    comments          = models.CharField(max_length=255,default='Valid')
-
-    def save(self,*args,**kwargs):
-        with connection.cursor() as cursor:
-            if self.correction_status == 'I':
-                cursor.execute ("UPDATE registered_lease SET correction_state = True  WHERE lease_status = %s ",['A'])
-            elif self.correction_status == 'A':
-                cursor.execute ("UPDATE registered_lease SET correction_state = False  WHERE lease_status = %s ",['A'])
-        super(correction,self).save(*args,*kwargs)
+    class Meta:
+        unique_together = ('bill_id','window_period')
+    
+    
 
 
-UNITS=(
-    (f'm\N{SUPERSCRIPT TWO}',f'm\N{SUPERSCRIPT TWO}'),
-  
-)
-
-ZONE = (
-    (1,1),
-    (2,2),
-    (3,3),
-    (4,4),
-    (5,5),
-    (6,6),
-)
-class Bill_dataset(Model):
-    record_date         = models.DateField(auto_now=True)
+class billdata(Model):
     lease_number        = models.TextField(max_length=50,unique=True,name="lease_number",validators=[MinLengthValidator(7)])
     zone_number         = models.PositiveIntegerField (choices=ZONE,default=1)
+    area                = models.DecimalField(max_digits=10, decimal_places=2,validators=[MinValueValidator(0.01)])
+    area_units          = models.CharField(max_length=50,default='m\N{SUPERSCRIPT TWO}')
+    landuse_type        = models.ForeignKey(Landuse_Type,on_delete=models.CASCADE) 
+    lease_status        = models.CharField(max_length=1,choices=STATUS,default ="A")
     lastpayment_period  = models.IntegerField( choices=[(r,r) for r in range(1900, datetime.date.today().year+1)], blank=True,default=0,null=True) 
     registration_date   = models.DateField(auto_now = False,default=date.today)
     lastpayment_date    = models.DateField(blank=True,null=True)
-    period              = models.IntegerField( choices=[(r,r) for r in range(1900, datetime.date.today().year+2)], default=current_year,unique=True)
-    
+    billdata            = models.BooleanField(default=False)
+
     def __str__(self):
         return self.lease_number
 
-class billdata_area(Model):
-    lease_number        = models.ForeignKey(Bill_dataset,on_delete=models.CASCADE)
-    area                = models.DecimalField(max_digits=10, decimal_places=2,validators=[MinValueValidator(0.01)])
-    units               = models.CharField(max_length=50,choices =UNITS,default="square_meters")
-    period              = models.IntegerField( choices=[(r,r) for r in range(1900, datetime.date.today().year+2)], default=current_year,unique=True)
-   
+    class Meta:
+        verbose_name = 'Data Bucket'
+        verbose_name_plural = 'Data Bucket' 
 
-class billdata_Landuse(Model):
-    lease_number        = models.ForeignKey(Bill_dataset,on_delete=models.CASCADE,limit_choices_to=Q(lease_status='A'))
-    landuse             = models.ForeignKey(Landuse_Type,on_delete=models.CASCADE)
-    period              = models.IntegerField( choices=[(r,r) for r in range(1900, datetime.date.today().year+2)], default=current_year,unique=True)
+
+  
  

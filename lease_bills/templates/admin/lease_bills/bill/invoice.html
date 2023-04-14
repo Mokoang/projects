@@ -4,6 +4,8 @@
 
 {% load mathfilters %}
 
+{% load new_tags %}
+
 <div class="container float-right">
     <div class="row gutters"style="margin-bottom:-100px;">
     <div class="col-xl-11 col-lg-11 col-md-11 col-sm-11">
@@ -21,7 +23,7 @@
 <div class="container col-md-12" id="pdf" ><div class="container col-md-12">
   <div class="container" >
     <div class="inv-title" >
-            <h1>{{ object.invoice_number }}</h1>
+            <h1>{{ object.lease_number}}</h1>
     </div>
     {% load static %}
     <img src="{% static 'registered/img/logo.png' %}" class="inv-logo "  />
@@ -40,8 +42,8 @@
             <th>Issue Date</th>
             <td>{{ object.billing_date }}</td>
           </tr>
-          {% for item in thelease %}
-          {% if item.id == object.lease_number_id %}
+          {% for item in billdata %}
+          {% if item.lease_number == object.lease_number %}
             <tr>
               <th>Reg. Date</th>
               <td>{{ item.registration_date }}</td>
@@ -54,20 +56,7 @@
             <th>lease_number #</th>
             <td>{{ object.lease_number }}</td>
           </tr>
-          <tr></tr>
-            <th>Current Land Use </th>
-
-            <td>{{ item.landuse_type }}</td>
-
-          </tr>
           <tr>
-            <th>Zone </th>
-            <td>{{ item.zone_number }}</td>
-          </tr>
-          <tr>
-            <th>Current Area </th>
-            <td>{{ item.area }} {{ item.area_units }}</td>
-          </tr>
         </table>
       </div>
     </div>
@@ -86,19 +75,24 @@
         </thead>
         {% for data in bill_details %}
         <tbody>
-         
-          {%if data.invoice_number == object.invoice_number %}
+          {%if data.bill_id_id == object.id %}
                 <tr>
-                  <td>{{data.period}}</td>
+                  <td>{% theperiod data.window_period_id %}</td>
                   <td>{{data.official_area}} {{data.area_units}}</td>
                   <td>{{data.landuse_type}}</td>
                   <td>{{data.zone_number}}</td>
                   <td>{{data.fixed_rate}}</td>
                   <td>{{data.penalty}}</td>
-                  <td>M {{ data.penalty|mul:data.fixed_rate|mul:item.area|div:100|floatformat:2 }}</td>
+                  <!--if current date.year > period add penalty -->
+                  {%if data.window_period_id|cperiod_greater  %}
+                  <td>M {{ data.penalty|mul:data.fixed_rate|mul:data.official_area|div:100|floatformat:2 }}</td>
                   <td>M {{ data.fixed_rate|mul:data.official_area|floatformat:2 }}</td>
-                  <td>M {{ data.penalty|addition:100|mul:data.fixed_rate|mul:data.official_area|div:100|floatformat:2 }}</td>
-                  
+                  <td>M {{ 100|addition:data.penalty|mul:data.fixed_rate|mul:data.official_area|div:100|floatformat:2 }}</td>
+                  {% else %}
+                  <td>M {{ 0|mul:data.fixed_rate|mul:data.official_area|div:100|floatformat:2 }}</td>
+                  <td>M {{ data.fixed_rate|mul:data.official_area|floatformat:2 }}</td>
+                  <td>M {{ 100|addition:0|mul:data.fixed_rate|mul:data.official_area|div:100|floatformat:2 }}</td>
+                  {%endif%} 
           {% endif %}
           </tr>
         </tbody>
@@ -113,13 +107,13 @@
         <table>
           <tr>
             <th>Grand total</th>
-            <td>M {{ object.balance }}</td>
+            <td>M {% total_bill object.id %}</td>
           </tr>
         </table>
       </div>
     </div>
   </div>
-     </div>>
+     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
     <script type="text/javascript" src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
@@ -251,11 +245,6 @@ flex: 2;
 flex: 1;
 }
 </style>
-
-
-
-
-
 
 {% endblock %}
 {% load i18n admin_urls %}
