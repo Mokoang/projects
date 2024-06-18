@@ -1,0 +1,105 @@
+<!-- {% extends 'admin/base_site.html' %} -->
+
+{% block content %}
+
+<div class="col-xl-12 col-lg-12 col-md-11 col-12 text-center" style="margin-top: 35px;">
+      <div class="card W-100"  >
+         <div class="card-header">
+           LEASE DETAILS
+         </div>
+		 <br/>
+    <div class="custom-actions-btns mb-5 float-left">
+            
+        <a href="#" class="btn btn-secondary float-left"onclick="history.back()">
+          <i class="fas fa-angle-double-left icon"></i> Back
+        </a>
+        </div>
+		 <table style="width:600px;">
+
+            <tr>  
+            <th>Lease_number #</th>
+            <td><span class="badge badge-primary badge-pill">{{lease_data.lease_number}}</span></td>
+            </tr>
+            <tr>  
+            <th>Registration Date  </th>
+            <td><span class="badge badge-primary badge-pill">{{lease_data.registration_date}}</span></td>
+            </tr>
+            <tr>  
+            <th>Last Payment Period</th>
+            <td><span class="badge badge-primary badge-pill">{{lease_data.lastpayment_period}}</span></td>
+            </tr>
+            <tr>  
+            <th>Lease Holder</th>
+            <td><span class="badge badge-primary badge-pill">{{lease_data.lease_holder}}</span></td>
+            </tr>
+            <tr>  
+            <th>Telephone Number</th>
+            <td><span class="badge badge-primary badge-pill">{{lease_data.phone_number}}</span></td>
+            </tr>
+            <tr>  
+            <th>Address</th>
+            <td><span class="badge badge-primary badge-pill">{{lease_data.address}}</span></td>
+            </tr>
+            <tr>  
+            <th>District</th>
+            <td><span class="badge badge-primary badge-pill">{{lease_data.district}}</span></td>
+            </tr>
+            <tr>  
+            <th>Lease_status</th>
+            <td><span class="badge badge-primary badge-pill">{% if lease_data.lease_status == 'A' %} Active {% else %} Not Active {% endif %}</span></td>
+            </tr>  
+			<tr>  
+            <th>Tag</th>
+            <td><span class="badge badge-primary badge-pill">{{lease_data.tag}}</span></td>
+            </tr>
+
+        </table>
+		<br/><br/>
+            <table class="table table-striped"id="myTable" >
+              <thead>
+                <tr>
+                  <th class="text-center">Period</th>
+                  <th class="text-center">Area ({{lease_data.area_units}})</th>
+                  <th class="text-center">landuse</th>
+                  <th class="text-center">Zone</th>
+                  <th class="text-center">Fixed-Rate</th>
+                  <th class="text-center">Penalty</th>
+                </tr>
+              </thead>
+               <tbody>
+			   <tr>
+                 {% for data in lease_det %}
+				  <td>{{data.period}}</td>
+				  <td>{{data.area}}</td>
+				  <td>{{data.landuse_type}}</td>
+				  <td>{{data.zone_number}}</td>
+				  <td>{{data.fixed_rate}}</td>
+				  <td>{{data.penalty}}</td>
+				  </tr>
+                 {% endfor %}
+                				 
+               </tbody>
+             </table>
+             </div>
+             </div>
+             </div>
+             </div>
+
+
+<style>
+table { 
+    box-shadow: 1px 1px 1px 1px #999;
+    border-collapse:separate;
+    border-radius:6px;
+  }
+</style>
+
+{% endblock %}
+{% load i18n admin_urls %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+        &rsaquo; {{ object }}
+{% endblock %}
+    </div>

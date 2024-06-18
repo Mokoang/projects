@@ -2,11 +2,10 @@ if (!$) {
     // Need this line because Django also provided jQuery and namespaced as django.jQuery
     $ = django.jQuery;
 }
-
+$('.btn-success').html(' <i class="fa fa-plus-circle"></i> Add Ground Rent Rates');
 $(document).ready(function() {
   $('input[Name="_addanother"]').hide();
   $('input[Name="_continue"]').hide();
-  $('.btn-success').html(' <i class="fa fa-plus-circle"></i> Reference Table');
   $('#add_id_landuse_type').hide();
   $('#view_id_landuse_type').hide();
  

@@ -1,0 +1,61 @@
+{% extends 'admin/base_site.html' %}
+
+{% block content %}
+<form  class="float-right col-md-12 " id="my-custom-form">
+    <!-- Your custom form fields here -->
+    <div class="card">
+        <div class="card-header">
+          Featured
+        </div>
+        <div class="card-body">
+                    
+            <table class="table table-striped"id="myTable">
+                <thead>
+                    <th scope="col"><input id="acb" type="checkbox" />All</th>
+                    <th scope="col">Reg. Date</th>
+                    <th scope="col">LastPayment Date</th>
+                    <th scope="col">Lease number</th>
+                    <th scope="col">Landuse type</th>
+                    <th scope="col">Zone</th>
+                    <th scope="col">Area</th>
+                    <th scope="col">Lease History</th>
+                </thead>
+                <tbody>
+                </tbody>
+                </table>
+          <a href="#" class="btn btn-primary">Go somewhere</a>
+        </div>
+      </div>
+
+<input type="text" class="float-right col-4" placeholder="search for lease number" onkeyup="myFunction()"id="myInput"></div>
+
+<button class="btn btn-primary float-right" id="save-button">Send for billing</button></div>
+<table class="table table-striped"id="myTable">
+<thead>
+    <th scope="col"><input id="acb" type="checkbox" />All</th>
+    <th scope="col">Reg. Date</th>
+    <th scope="col">LastPayment Date</th>
+    <th scope="col">Lease number</th>
+    <th scope="col">Landuse type</th>
+    <th scope="col">Zone</th>
+    <th scope="col">Area</th>
+    <th scope="col">Lease History</th>
+</thead>
+<tbody>
+</tbody>
+</table>
+</div>
+<div id="hello">
+</div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
+<script type="text/javascript" src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
+
+{% endblock %}
+{% load i18n admin_urls %}
+
+{% block breadcrumbs %}
+
+{% endblock %}

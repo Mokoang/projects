@@ -1,0 +1,21 @@
+
+      {{item}}
+      {% for item in data %}
+          <tr>
+          <td scope="row"><input class="cb" type="checkbox" id="cb" /></td>
+          <td>{{item.registration_date}}</td>
+          <td>{{item.lastpayment_date}}</td>
+          <td>{{item.lease_number}}</td>
+          <td>{{item.landuse_type}}</td>
+          <td>{{item.zone_number}}</td>
+          <td>{{item.area}} {{item.area_units}}</td>
+          {% if item.lease_history == "U" %}
+          <td>Unchanged</td>
+          {%else %}
+          <td>Changed</td>
+          {%endif%}
+          <td id="id" style="display:none">{{item.id}}</td>
+          </tr>
+          
+  
+    {% endfor %}   

@@ -1,0 +1,37 @@
+<VirtualHost laa-hq-hrfm:8181>
+    ServerName example.com
+    DocumentRoot "C:/Apache24/htdocs/Billing"
+
+    #WSGI Configuration for Billing App on 192.168.0.4
+    WSGIScriptAlias /billing "C:/Apache24/htdocs/Billing/Billing/wsgi.py"
+    <Directory "C:/Apache24/htdocs/Billing">
+        <Files wsgi.py>
+            Require all granted
+        </Files>
+    </Directory>
+
+    #Alias for serving static files for Billing App on 192.168.0.4
+    Alias /billing/static/ "C:/Apache24/htdocs/Billing/static/"
+    <Directory "C:/Apache24/htdocs/Billing/static/">
+        Require all granted
+    </Directory>
+</VirtualHost>
+
+<VirtualHost 192.168.0.4:8181>
+    ServerName example.net
+    DocumentRoot "C:/Apache24/htdocs/Customer_billing"
+
+    # WSGI Configuration for Customer Billing App on 192.168.0.4
+    WSGIScriptAlias /admin "C:/Apache24/htdocs/Customer_billing/Customer_billing/wsgi.py"
+    <Directory "C:/Apache24/htdocs/Customer_billing">
+        <Files wsgi.py>
+            Require all granted
+        </Files>
+    </Directory>
+
+    # Alias for serving static files for Customer Billing App on 192.168.0.4
+    Alias /cb_static/ "C:/Apache24/htdocs/Customer_billing/static/"
+    <Directory "C:/Apache24/htdocs/Customer_billing/static/">
+        Require all granted
+    </Directory>
+</VirtualHost>

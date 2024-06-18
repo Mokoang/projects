@@ -1,13 +1,21 @@
 from django.shortcuts import render
 from registered.models import lease
+from .models import Bill_dataset
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+import json
+from django.http import JsonResponse
+
+from django.urls import reverse
 
 
-# Create your views here.
-@csrf_exempt
-def post_data (request):
-    # request should be ajax and method should be POST.
-  
-  return render('change_form.html')
+def my_view(request):
+  url = reverse('lease_bills:lease_bills_Bill_save_custom_data')
+
+
+
+def save_custom_data(request):
+   url = reverse('lease_bills:lease_bills_Bill_save_custom_data')
+
 

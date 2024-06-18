@@ -1,5 +1,5 @@
 from django import forms
-from .models import lease, surrendered_lease,adjusted_area,alter_LandUse,Landuse_Type
+from .models import lease, surrendered_lease,adjusted_area,alter_LandUse,Landuse_Type,lease_details
 from django.db.models import Q
 
 # lease Form
@@ -9,10 +9,10 @@ class leaseForm( forms.ModelForm ):
   area_units   = forms.CharField(widget=forms.HiddenInput(), label='')
 
   class Meta:
-      model = lease
-      fields = ['lease_number', 'landuse_type','zone_number','registration_date','lastpayment_date','lastpayment_period','area','area_units']
-      labels ={"area_units":"",}
-      field_order = ['lease_number', 'landuse_type','area','area_units','zone_number','registration_date','lastpayment_date','lastpayment_period']
+      model       =  lease
+      fields      =  ['lease_number', 'landuse_type','zone_number','registration_date','lastpayment_date','lastpayment_period','area','area_units','lease_holder','phone_number','address','district']
+      labels      =  {"area_units":"",}
+      field_order =  ['lease_number', 'landuse_type','area','area_units','zone_number','registration_date','lastpayment_date','lastpayment_period','lease_holder','phone_number','address','district']
 
       def __init__(self, *args, **kwargs):
         self.order_fields(self.Meta.fields)
@@ -24,6 +24,15 @@ class surrendered_leaseForm( forms.ModelForm ):
     model = surrendered_lease
     fields = '__all__'
 
+    def __init__(self, *args, **kwargs):
+      self.order_fields(self.Meta.fields)    
+
+class lease_detailsForm( forms.ModelForm ):
+  area_units   = forms.CharField(widget=forms.HiddenInput(), label=f' m\N{SUPERSCRIPT TWO}',required=False)
+  class Meta:
+    model  = lease_details
+    fields = '__all__'
+    labels ={"area_units":"",}
 
 class alter_landuseForm( forms.ModelForm ):
   comments              = forms.CharField(widget=forms.Textarea, required=False)

@@ -16,12 +16,14 @@ Including another URLconf
 from django.urls import path,include
 from . import views
 from django.views.decorators.csrf import csrf_protect
+from .models import Bill_dataset
 #import reporting
 
 #reporting.autodiscover() 
-
+app_name = 'lease_bills'
 
 urlpatterns = [
-    path('post_data',views.post_data,name='post_data'),
-    
+  # Your other URL patterns here
+  path('bill/<int:pk>/save-custom-data/', views.save_custom_data, name='save_custom_data'),
+  #path('lease_bills/bill/select_leases/', views.select_leases, name='select_leases'),
 ]

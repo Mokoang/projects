@@ -198,6 +198,27 @@ const plugin = {
     ctx.restore();
   }
 };   
+var inactivityTimeout = 300000;  // 5 minutes in milliseconds
+    var lastActivityTime = new Date().getTime();
+
+    function updateActivity() {
+        lastActivityTime = new Date().getTime();
+    }
+
+    function checkInactivity() {
+        var currentTime = new Date().getTime();
+        if (currentTime - lastActivityTime > inactivityTimeout) {
+            // Redirect to the logout URL when inactive
+            window.location.href = "{% url 'admin:logout' %}";
+        }
+    }
+
+    // Update the activity on various user interactions
+    window.addEventListener("mousemove", updateActivity);
+    window.addEventListener("keydown", updateActivity);
+
+    // Check inactivity periodically
+    setInterval(checkInactivity, 300000);  //
 </script>
                         
 

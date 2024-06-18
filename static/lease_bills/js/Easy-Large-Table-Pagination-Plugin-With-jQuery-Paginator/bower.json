@@ -1,0 +1,15 @@
+{
+  "name": "jquery-paginator",
+  "version": "1.2.3",
+  "author": ["dozoisch"],
+  "keywords": [
+    "paginator", "paginate", "jquery","jquery-paginator", "dozoisch"
+  ],
+  "repository": {"type": "git", "url": "git://github.com/dozoisch/paginator.git"},
+  "main": "jquery.paginate.js",
+  "dependencies": {
+    "jquery": ">=1.9.1"
+  },
+  "license": "./LICENSE",
+  "ignore": ["bower_components", "Makefile"]
+}

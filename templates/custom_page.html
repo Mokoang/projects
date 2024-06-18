@@ -1,0 +1,255 @@
+{% extends 'admin/base_site.html' %}
+
+{% block content %}
+
+{% load mathfilters %}
+
+{% load new_tags %}
+
+<div class="container float-right">
+    <div class="row gutters"style="margin-bottom:-100px;">
+    <div class="col-xl-11 col-lg-11 col-md-11 col-sm-11">
+        <div class="custom-actions-btns mb-5 float-right">
+            
+            <a href="#" class="btn btn-secondary" onclick="printDiv('pdf','Title')">
+                <i class="icon-printer"></i> Print
+            </a>
+        </div>
+    </div>
+</div>
+</div>
+
+{% load new_tags %}
+<div class="container col-md-12" id="pdf" ><div class="container col-md-12">
+  <div class="container" >
+    <div class="inv-title" >
+            <h1>{{ object.lease_number}}</h1>
+    </div>
+    {% load static %}
+    <img src="{% static 'registered/img/logo.png' %}" class="inv-logo "  />
+    <div class="inv-header">
+      <div>
+        <h2>Land Administration Authority</h2>
+        <ul>
+          <li>Lerotholi Road, Maseru</li>
+          <li></li>
+          <li>(+266) 222 14 100 | info@laa.org.ls</li>
+        </ul>
+      </div>
+      <div>
+        <table style="width:300px;">
+          <tr>
+            <th>Issue Date</th>
+            <td>{{ object.billing_date }}</td>
+          </tr>
+            <tr>
+              <th>Reg. Date</th>
+              <td>{% get_regdate object.lease_number %}</td>
+            </tr>
+            <tr>
+              <th> Last Payment Period</th>
+              <td>{% get_lpperiod object.lease_number %}</td>
+            </tr>
+            <tr>  
+            <th>lease_number #</th>
+            <td>{{ object.lease_number }}</td>
+          </tr>
+          <tr>
+        </table>
+      </div>
+    </div>
+    <div class="inv-body">
+      <table>
+        <thead>
+          <th>Period</th>
+          <th>Area</th>
+          <th>Land Use</th>
+          <th>Zone</th>
+          <th>Fixed Rate</th>
+          <th>Penalty(%)</th>
+          <th>Calculated Penalty</th>
+          <th>Ground Rent</th>
+          <th>Total Balance</th>
+        </thead>
+        {% for data in bill_details %}
+        <tbody>
+          {%if data.bill_id_id == object.id %}
+          abcd
+                <tr>
+                  <td>{% theperiod data.window_period_id %}</td>
+                  <td>{{data.official_area}} {{data.area_units}}</td>
+                  <td>{{data.landuse_type}}</td>
+                  <td>{{data.zone_number}}</td>
+                  <td>{{data.fixed_rate}}</td>
+                  <td>{{data.penalty}}</td>
+                  {%if data.window_period_id|cperiod_greater  %}
+                  <td>M {{ data.penalty|mul:data.fixed_rate|mul:data.official_area|div:100|floatformat:2 }}</td>
+                  <td>M {{ data.fixed_rate|mul:data.official_area|floatformat:2 }}</td>
+                  <td>M {{ 100|addition:data.penalty|mul:data.fixed_rate|mul:data.official_area|div:100|floatformat:2 }}</td>
+                  {% else %}
+                  <td>M {{ 0|mul:data.fixed_rate|mul:data.official_area|div:100|floatformat:2 }}</td>
+                  <td>M {{ data.fixed_rate|mul:data.official_area|floatformat:2 }}</td>
+                  <td>M {{ 100|addition:0|mul:data.fixed_rate|mul:data.official_area|div:100|floatformat:2 }}</td> 
+                  {% endif %}
+          {% endif %}
+          </tr>
+        </tbody>
+        {% endfor %}
+      </table>
+    </div>
+    <div class="inv-footer">
+      <div><!-- required --></div>
+      <div>
+        <table>
+          <tr>
+            <th>Grand total</th>
+            <td>M {% total_bill object.id %}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+     </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
+    <script type="text/javascript" src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
+<script>
+if (!$) {
+// Need this line because Django also provided jQuery and namespaced as django.jQuery
+$ = django.jQuery;
+}
+$(function(){
+  y =4
+});
+
+
+function printDiv(divId,
+title) {
+
+let mywindow = window.open('', 'PRINT', 'height=650,width=900,top=100,left=150');
+
+mywindow.document.write(`<html><head><title></title>`);
+mywindow.document.write('</head><body >');
+mywindow.document.write(document.getElementById(divId).innerHTML);
+mywindow.document.write('</body></html>');
+
+mywindow.document.close(); // necessary for IE >= 10
+mywindow.focus(); // necessary for IE >= 10*/
+
+mywindow.print();
+mywindow.close();
+
+return true;
+}
+
+</script>
+<style>
+@media print {
+@page {
+  size: A4;
+}
+}
+ul {
+padding: 0;
+margin: 0 0 1rem 0;
+list-style: none;
+}
+body {
+font-family: "Times New Roman";
+margin: 0;
+background-color:white ;
+}
+table {
+width: 100%;
+border-collapse: collapse;
+}
+table,
+table th,
+table td {
+border: 1px solid silver;
+}
+table th,
+table td {
+text-align: right;
+padding: 2px;
+}
+h1,
+h4,
+p {
+margin: 0;
+}
+
+.container {
+padding: 20px 0;
+width: 1000px;
+max-width: 90%;
+margin: 0 auto;
+}
+
+.inv-title {
+padding: 10px;
+border: 1px solid silver;
+text-align: center;
+margin-bottom: 30px;
+}
+
+.inv-logo {
+width: 300px;
+display: block;
+margin: 0 auto;
+margin-bottom: 40px;
+}
+
+/* header */
+.inv-header {
+display: flex;
+margin-bottom: 16px;
+}
+.inv-header > :nth-child(1) {
+flex: 2;
+}
+.inv-header > :nth-child(2) {
+flex: 1;
+}
+.inv-header h2 {
+font-size: 12px;
+margin: 0 0 0.3rem 0;
+}
+.inv-header ul li {
+font-size: 12px;
+padding: 3px 0;
+}
+
+/* body */
+.inv-body table th,
+.inv-body table td {
+text-align: left;
+}
+.inv-body {
+margin-bottom: 30px;
+}
+
+/* footer */
+.inv-footer {
+display: flex;
+flex-direction: row;
+}
+.inv-footer > :nth-child(1) {
+flex: 2;
+}
+.inv-footer > :nth-child(2) {
+flex: 1;
+}
+</style>
+
+{% endblock %}
+{% load i18n admin_urls %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+        &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+        &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+        &rsaquo; {{ object }}
+    </div>
+{% endblock %}

@@ -30,15 +30,31 @@ SECRET_KEY = 'django-insecure-e!k42$8b3zpgx+5@+i0w3y94-0e9-0&7xpy9n_%@yk28l3(whc
 #    SECRET_KEY = f.read().strip()
 #SECRET
 # SECURITY WARNING: don't run with debug turned on in production!
+
+# settings.py
+
+# Configure django-axes
+
+
 DEBUG = True
 
-ALLOWED_HOSTS = []
+SITE_ID = 1
+
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'laa-hq-hrfm','192.168.0.4','billing.local']
+
+
+# Billing Settings
+CSRF_COOKIE_NAME = 'billing_csrftoken'
+SESSION_COOKIE_NAME = 'billing_session_id'
+CSRF_COOKIE_PATH = '/'
+
 
 
 # Application definition
 
 INSTALLED_APPS = [
     'jazzmin',
+    'admin_views',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -50,15 +66,21 @@ INSTALLED_APPS = [
     'mathfilters',
     'import_export',
     'Report',
+    'reference_tables',
     'registered',
     'lease_bills.apps.LeaseBillsConfig',
-    'user_accounts.apps.UserAccountsConfig',
+    #'user_accounts.apps.UserAccountsConfig',
     'admin_extra_buttons',
-    
+    #'silk',
+    #'custom_silk',
+    'axes',
+    #'debug_toolbar',
 ]
-
+AXES_FAILURE_LIMIT = 3
+AXES_COOLOFF_TIME = 1  # Lockout for 1 minute if failure limit is reached
 
 MIDDLEWARE = [
+    #'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -66,10 +88,21 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
+    # AxesMiddleware should be the last middleware in the MIDDLEWARE list.
+    #'silk.middleware.SilkyMiddleware',
+    #'django_cprofile_middleware.middleware.ProfilerMiddleware',
+    'axes.middleware.AxesMiddleware', 
     
 ]
 
+AUTHENTICATION_BACKENDS = [
+    # AxesStandaloneBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
+    'axes.backends.AxesStandaloneBackend',
+
+    # Django ModelBackend is the default authentication backend.
+    #'registered.custom_auth_backends.NoPermissionCheckModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 SESSION_COOKIE_EXPIRE_AT_BROWSER_CLOSE = True
 #SESSION_COOKIE_AGE = 300 #close session after 5 minutes of inactivity
@@ -80,8 +113,28 @@ LOGIN_REDIRECT_URL = '/'
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+STATIC_ROOT = BASE_DIR / 'productionfiles'
+
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+# LOGGING = {
+    # 'version': 1,
+    # 'disable_existing_loggers': False,
+    # 'handlers': {
+        # 'console': {
+            # 'level': 'DEBUG',
+            # 'class': 'logging.StreamHandler',
+        # },
+    # },
+    # 'loggers': {
+        # 'django.db.backends': {
+            # 'handlers': ['console'],
+            # 'level': 'DEBUG',
+        # },
+    # },
+# }
+
+
 
 TEMPLATES = [
     {
@@ -118,7 +171,7 @@ DATABASES = {
         'NAME'    : 'billing',
         'HOST'    : 'localhost',
         'USER'    : 'postgres',
-        'PASSWORD': 'laa+1234',
+        'PASSWORD': 'admin1234*',
         'PORT'    : '5432',
     }
 }
@@ -164,12 +217,12 @@ TIME_ZONE = 'Africa/Harare'
 USE_I18N = True
 
 USE_TZ = True
-
+INTERNAL_IPS = ('127.0.0.1',)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL   = 'static/'
+
 
 
 # Default primary key field type
@@ -263,7 +316,7 @@ JAZZMIN_SETTINGS = {
     "hide_models": [],
 
     # List of apps (and/or models) to base side menu ordering off of (does not need to contain all apps/models)
-    "order_with_respect_to": ["user_accounts", "registered","registered.landuse_type", "registered.lease", "registered.surrendered_lease","registered.alter_LandUse","registered.adjusted_area","lease_bills","lease_bills.reference_table","lease_bills.verification","lease_bills.correction","lease_bills.bill"],
+    "order_with_respect_to": ["user_accounts","reference_tables","reference_tables.landuse_Type","reference_tables.reference_table", "registered","registered.landuse_type", "registered.lease","registered.lease_details", "registered.surrendered_lease","registered.alter_LandUse","registered.adjusted_area","lease_bills","lease_bills.verification","lease_bills.correction","lease_bills.bill_payment","lease_bills.bill_dataset","lease_bills.bill","lease_bills.bill_invoice","lease_bills.bill_payment","hello"],
 
     # Custom links to append to app groups, keyed on app name
     "custom_links": {
@@ -282,23 +335,27 @@ JAZZMIN_SETTINGS = {
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
         "registered.lease":"fas fa-landmark",
+        "registered.lease_details":"fas fa-info-circle",
         "registered.surrendered_lease":"fas fa-ban",
         "registered.adjusted_area":"fas fa-chart-area",
         "registered.alter_LandUse":"fas fa-certificate",
-        "registered.landuse_type":"fas fa-check-double",
-        "lease_bills.reference_table":"fas fa-table",
+        "reference_tables.landuse_type":"fas fa-check-double",
+        "reference_tables.reference_table":"fas fa-table",
         "lease_bills.correction":"	fas fa-edit",
         "lease_bills.verification":"	fas fa-certificate",
         "lease_bills.bill":" fas fa-receipt",
+        "lease_bills.bill_invoice":"fas fa-file-invoice",
         "lease_bills": "fas fa-dollar-sign",
         "lease_bills.bill_finale": "fas fa-calendar-alt",
         "lease_bills.bill_dataset": "fas fa-database",
         "lease_bills.billdata": "fas  fa-server",
-        "lease_bills.billing_period": "fas fa-calendar-day",
+        "lease_bills.bill_payment": "fas fa-money-bill-wave-alt",
+        "reference_tables.billing_period": "fas fa-calendar-day",
         "registered": "fas fa-database",
         "user_accounts":"fas fa-users-cog",
         "user_accounts.user":"fas fa-users",
         "Report":"fas fa-chart-bar",
+        "reference_tables":"fas fa-archive"
     },
     # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",
@@ -334,4 +391,5 @@ JAZZMIN_SETTINGS = {
     # Add a language dropdown into the admin
     #"language_chooser": True,
 }
+
 

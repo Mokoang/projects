@@ -1,5 +1,8 @@
 from django import template
 from ..models import lease,Landuse_Type
+from reference_tables.models import reference_table          
+from django.db.models import Count
+from django.db.models.functions import ExtractYear
 
 register = template.Library()
 
@@ -22,46 +25,44 @@ def active_leases():
 
 @register.simple_tag
 def graph_labels():
-    labels = []
-    data   = []
-    count  = 0
-    for datas in lease.objects.all().order_by('-registration_date'):
-   
-        if len(labels)<1:
-            labels.append(datas.registration_date.year)
-            data.append(1)
-            count=1
-        else:
-            if len(labels)<=5:
-                if labels[len(labels)-1]==datas.registration_date.year:
-                    data[len(data)-1] +=1
-                else:
-                    if len(labels)<5:
-                        labels.append(datas.registration_date.year)
-                        data.append(1)
-                        count+=1
-    return labels  
-          
+    lease_years = lease.objects \
+        .annotate(year=ExtractYear('registration_date')) \
+        .values('year') \
+        .distinct() \
+        .order_by('-year')[:5]
+
+    labels = [lease['year'] for lease in lease_years]
+
+    return labels
+
 @register.simple_tag
 def graph_data():
-    labels = []
-    data   = []
-    count  = 0
-    for datas in lease.objects.all().order_by('-registration_date'):
-   
-        if len(labels)<1:
-            labels.append(datas.registration_date.year)
-            data.append(1)
-            count=1
-        else:
-            if len(data)<=5:
-                if labels[len(labels)-1]==datas.registration_date.year:
-                    data[len(data)-1] +=1
-                else:
-                    if len(data)<5:
-                        labels.append(datas.registration_date.year)
-                        data.append(1)
-                        count+=1
-    return data  
+    lease_years = lease.objects \
+        .annotate(year=ExtractYear('registration_date')) \
+        .values('year') \
+        .annotate(count=Count('id')) \
+        .order_by('-year')[:5]
 
+    labels = [lease['year'] for lease in lease_years]
+    data = [lease['count'] for lease in lease_years]
+
+    return data
+
+
+
+@register.simple_tag
+def get_landuses():
+    thedata = {}
+    for data in Landuse_Type.objects.all():
+        thedata[data.id] = data.landuse
+
+    return thedata    
+
+@register.simple_tag
+def get_fixedrates(landusetype,zonenumber,period):
+    fixedrate = 0
+    for data in reference_table.objects.filter(Landuse_Type=landusetype).filter(zone_number=zonenumber):
+        if data.period == period:
+            fixedrate = data.fixed_rate
+    return fixedrate     
 

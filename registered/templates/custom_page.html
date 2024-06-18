@@ -1,0 +1,200 @@
+ {% extends 'admin/base_site.html' %}
+
+{% block content %}
+
+<form  class="float-right col-md-12 " id="my-custom-form">
+    <!-- Your custom form fields here -->
+    <div class="card">
+        <div class="card-header">
+          Lease Details :<a href="#"> {{lease_data.lease_number}}</a>
+        </div>
+        <div class="card-body">
+          <div id="table" class="table-editable">
+            <table class="table table-bordered table-responsive-md table-striped text-center" id="table">
+              <thead>
+                <tr>
+                  <th class="text-center">Period</th>
+                  <th class="text-center">Area ({{lease_data.area_units}})</th>
+                  <th class="text-center">landuse</th>
+                  <th class="text-center">Zone</th>
+                  <th class="text-center">Fixed-Rate</th>
+                  <th class="text-center">Penalty</th>
+                  <th class="text-center" style="display:none">ID</th>
+                </tr>
+              </thead> 
+              <tbody>
+                <tr>
+                  {% for data in lease_det %}
+                  {% load algorithms_tags %}
+                  <td class="pt-3-half period" >{{data.period}}</td>
+                  <td class="pt-3-half"><input type=number value={{data.area}} style="width:100px"/></td>
+                  <td class="pt-3-half" >
+                    <center>
+                    <select class="form-select form-control col-6 landusetype" aria-label="Default select example" style="width: 270px;" id="landusetype">
+                      {% get_landuses as landuses %} 
+                      {% for key, value in landuses.items %}
+                      {% if data.landuse_type_id == key %}
+                        <option value= {{key}} selected="true">{{ value }}</option>
+                      {%else%}
+                      <option value= {{key}} >{{ value }}</option>
+                      {%endif%}
+                      {% endfor %}
+                  </select>
+                   </center>
+                </td>
+                  <td style="text-align: center;vertical-align: middle;">
+                    <center>
+                    <select class="form-select form-control selectedzone" aria-label="Default select example" style="width: 80px;">
+                     {% if data.zone_number == 1 %}<option selected="true">1</option>{%else%}<option>1</option>{%endif%}
+                     {% if data.zone_number == 2 %}<option selected="true">2</option>{%else%}<option>2</option>{%endif%}
+                     {% if data.zone_number == 3 %}<option selected="true">3</option>{%else%}<option>3</option>{%endif%}
+                     {% if data.zone_number == 4 %}<option selected="true">4</option>{%else%}<option>4</option>{%endif%}
+                     {% if data.zone_number == 5 %}<option selected="true">5</option>{%else%}<option>5</option>{%endif%}
+                     {% if data.zone_number == 6 %}<option selected="true">6</option>{%else%}<option>6</option>{%endif%}
+                  </select>
+                  </center>
+                </td>
+                <td ><input class="fixed_rate" type=number value={{data.fixed_rate}} style="width:80px"/></td>
+                <td ><input class="penalty" type=number value={{data.penalty}} style="width:80px"/></td>
+                <td style="display:none">{{data.id}}</td>
+                </tr>
+                {%endfor%}
+                <!-- This is our clonable table line -->
+              </tbody>
+            </table>
+          </div> 
+          <div class="form-group float-right">
+            <input type="button" class="btn {{ jazzmin_ui.button_classes.success }} form-control" name="_save" value="Commit"style="width:200px" id="commit">
+        </div>
+        </div> 
+      </div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
+<script type="text/javascript" src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
+<script>
+if (!$) {
+// Need this line because Django also provided jQuery and namespaced as django.jQuery
+$ = django.jQuery;
+}
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === name + '=') {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+$(function(){
+   $("#commit").on('click',function(){
+    var tableData = [];
+        $('#table tbody tr').each(function (row, tr) {
+            tableData.push({
+                'period': $(tr).find('td:eq(0)').text(),
+                'area': $(tr).find('td:eq(1) input').val(),
+                'landuse_type_id': $(tr).find('td:eq(2) select').val(),
+                'zone_number': $(tr).find('td:eq(3) select').val(),
+                'fixed_rate': $(tr).find('td:eq(4) input').val(),
+                'penalty': $(tr).find('td:eq(5) input').val(),
+                'id': $(tr).find('td:eq(6)').text()
+            });
+        });
+        var formData = JSON.stringify(tableData);
+    $.ajax({
+          // Other parameters
+          headers: {
+            "X-CSRFToken": getCookie("csrftoken")  // Include the CSRF token
+          },
+         type:"POST",
+          url:"save-data/",
+          data:formData,
+          contentType: 'application/json; charset=utf-8',
+          dataType: 'json',
+          success: function (response) {
+                // Handle success response
+                alert('Data saved successfully!');
+                  window.location.href = "{% url 'admin:registered_lease_changelist' %}";
+            },
+            error: function (error) {
+                // Handle error response
+                if (error.responseJSON && error.responseJSON.message) {
+                    alert('Error: ' + error.responseJSON.message);
+                } else {
+                    alert('An error occurred while saving the data.');
+                }
+            }
+    });
+   });
+});
+
+
+
+$(function(){
+  $('.landusetype').on('change',function(){
+    // Get the selected value
+    var $this = $(this);
+    var selectedlu   = $this.val();//landuse
+    var zone         = $this.closest('tr').find('.selectedzone').val();//zone_number
+    var period       = $this.closest('tr').find('.period').text(); 
+
+    
+    // Make an AJAX request to the Django view
+    $.ajax({
+      url: 'get-data/',  // Replace with the actual URL
+      method: 'GET',
+      data: {'selectedlu': selectedlu,'selectedzone':zone,'period':period},
+      success: function(data) {
+        // Handle the data rece;
+        $this.closest('tr').find('.fixed_rate').val(data.fixed_rate);// Replace 'key' with the actual key in your data
+        $this.closest('tr').find('.penalty').val(data.penalty)
+
+      },
+      error: function(error) {
+        console.error('Error:', error);
+      }
+    });
+  });
+});
+
+$(function(){
+  $('.selectedzone').on('change',function(){
+    // Get the selected value
+    var $this = $(this);
+    var zone         = $this.val();//landuse
+    var selectedlu   = $this.closest('tr').find('.landusetype').val();//zone_number
+    var period       = $this.closest('tr').find('.period').text(); 
+
+    
+    // Make an AJAX request to the Django view
+    $.ajax({
+      url: 'get-data/',  // Replace with the actual URL
+      method: 'GET',
+      data: {'selectedlu': selectedlu,'selectedzone':zone,'period':period},
+      success: function(data) {
+        // Handle the data rece;
+        $this.closest('tr').find('.fixed_rate').val(data.fixed_rate);// Replace 'key' with the actual key in your data
+        $this.closest('tr').find('.penalty').val(data.penalty)
+
+      },
+      error: function(error) {
+        console.error('Error:', error);
+      }
+    });
+  });
+});
+</script>
+{% endblock %}
+{% load i18n admin_urls %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+        &rsaquo; {{ object }}
+    </div>
+{% endblock %}

@@ -1,0 +1,374 @@
+{% extends 'admin/base_site.html' %}
+
+{% block content %}
+
+{% load mathfilters %}
+
+{% load new_tags %}
+
+<div class="container float-right">
+    <div class="row gutters"style="margin-bottom:-100px;">
+    <div class="col-xl-11 col-lg-11 col-md-11 col-sm-11">
+        <div class="custom-actions-btns mb-5 float-right">
+            
+            <a href="#" class="btn btn-secondary" onclick="printDiv('pdf','Title')">
+                <i class="icon-printer"></i> Print
+            </a>
+        </div>
+    </div>
+</div>
+</div>
+{% load new_tags %}
+<div class="container col-md-12" id="pdf" ><div class="container col-md-12">
+  <div class="container">
+    <div class="inv-title">
+      
+      {% for billitem in bill%}
+            <h1>{{billitem.lease_number}}</h1>
+            {%endfor%}
+    </div>
+    {% load static %}
+    <img src="{% static 'registered/img/logo.png' %}" class="inv-logo "  />
+    <div class="inv-header ">
+      <div>
+        <h6 style="font-weight: bolder;">GROUND RENT INVOICE</h6>
+        <h2>Land Administration Authority</h2>
+        <ul>
+          <li>Lerotholi Road, Maseru</li>
+          <li></li>
+          <li>(+266) 222 14 100 | info@laa.org.ls</li>
+        </ul>
+        
+      </div>
+      
+      <div>    
+      <table style="width:400px;" id="client_details">
+      {% for billitem in bill%}
+      <tr>
+          <th colspan="2">Client Details:</th>
+          </tr>
+        <tr>
+          <th>Reg. Date</th>
+          <td>{{billitem.registration_date}}</td>
+        </tr>
+        
+        <tr>
+          <th> Last Payment Period</th>
+          <td>{{billitem.lastpayment_date}}</td>
+        </tr>
+          <tr>  
+          <th>lease_number #</th>
+          <td>{{billitem.lease_number}}</td>
+        </tr>
+        <tr>  
+          <th>lease holder</th>
+          <td>{{billitem.lease_holder}}</td>
+        </tr>
+        <tr>  
+          <th>Address</th>
+          <td>{{billitem.address}}</td>
+        </tr>          
+        <tr>  
+          <th>District</th>
+          <td>{{billitem.district}}</td>
+        </tr>
+        <tr>
+         
+      </table>
+  
+      </div>
+    </div>
+    <div class="inv-body">
+      <table id="myTable" style="text-align: center;" class="table" >
+        <thead class="thead-dark">
+          <th style="text-align: center;">Description</th>
+          <th style="width: 200px;text-align: center;">Total</th>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Ground Rent </td>
+                <td> M {{object.fixed_rate|mul:object.official_area|floatformat:2}}</td>
+            </tr>
+            <tr>
+                <td>Arrears [for {{object.period|sub:1}}] </td>
+                <td>M {{ billitem.lease_number|cal_arreas:object.period}}</td>
+            </tr>
+      </table>
+    </div>
+    <div class="inv-footer">
+      <div>
+      </div>
+      <div>
+        <table id="grand_totals">
+          <tr>
+            <th>Grand total</th>
+            <td>M {{ billitem.lease_number|get_per_total:object.period}}</td>
+          </tr>
+          {%endfor%}
+        </table>
+      </div>
+    </div>
+    <div class="footer">
+      <p><bold>For payments below M100,000, payments can be made at either LAA Offices, Lerotholi Road near Radio Lesotho or deposited at:</bold></p>
+      <p>
+      <table class="table-borderless" id="bank_details" >
+        <tbody>
+        <tr>
+          <td>Bank</td>
+          <td>Standard Lesotho Bank</td>
+          <td>Bank</td>
+          <td>First National Bank</td>
+          <td>Bank</td>
+          <td>Nedbank Lesotho</td>
+        </tr>
+        <tr>
+          <td>Account Name</td>
+          <td>Land Administration Authority</td>
+          <td>Account Name</td>
+          <td>Land Administration Authority</td>
+          <td>Account Name</td>
+          <td>Land Administration Authority</td>
+        </tr>
+        <tr>
+          <td>Account Number</td>
+          <td>0140054006401</td>
+          <td>Account Number</td>
+          <td>62479917670</td>
+          <td>Account Number</td>
+          <td>021000084058</td>
+        </tr>
+        <tr>
+          <td >Branch Name</td>
+          <td>City Branch</td>
+          <td>Branch Name</td>
+          <td>Pioneer</td>
+          <td>Branch Name</td>
+          <td>Maseru</td>
+        </tr>
+        <tr>
+          <td>Branch Number/Code</td>
+          <td>060-667</td>
+          <td>Branch Number/Code</td>
+          <td>280061</td>
+          <td>Branch Number/Code</td>
+          <td>390161</td>
+        </tr>
+        </tbody>
+      </table>
+      </p>
+      <p><bold>All payments above M100,000 MUST be made at the bank<br/>
+       Note:<br/>
+       <ul style="list-style-type: square;">
+        <li>If payment is made at the bank, please quote your lease number as reference and send proof of payment to LAA Offices at the address above or email to tem@laa.org.ls, or fax to: 22313303</li>
+        <li>Nonpayment constitutes a breach of contract/lease condition</li>
+        <li>LAA is open to negotiations on payment terms, but the bill should be settled by 31 March {% get_end_of_next_fy %}, otherwise penalties will be levied on the amount due after that date.  </li>
+    </ul>
+      </bold>
+         
+      </p>
+      <!-- Add any additional information or links as needed -->
+  </div>
+  </div>
+     </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
+    <script type="text/javascript" src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
+<script>
+if (!$) {
+// Need this line because Django also provided jQuery and namespaced as django.jQuery
+$ = django.jQuery;
+}
+$(function(){
+  y =4
+});
+
+function printDiv(divId,
+title) {
+
+let mywindow = window.open('', 'PRINT', 'height=650,width=900,top=100,left=150');
+
+mywindow.document.write(`<html><head><title></title>`);
+mywindow.document.write('</head><body >');
+mywindow.document.write(document.getElementById(divId).innerHTML);
+mywindow.document.write('</body></html>');
+
+mywindow.document.close(); // necessary for IE >= 10
+mywindow.focus(); // necessary for IE >= 10*/
+
+mywindow.print();
+mywindow.close();
+
+return true;
+}
+
+</script>
+<style>
+  ul {
+      padding: 0;
+      margin: 0 0 1rem 0;
+      list-style: none;
+  }
+
+  body {
+     font-family: "montseratti";
+     font-size: 10;
+      margin: 0;
+      background-color: white;
+  }
+
+  table {
+      width: 100%;
+      border-collapse: collapse;
+  }
+
+  table,
+  table th,
+  table td {
+      border: 1px solid silver;
+  }
+
+  table th,
+  table td {
+      text-align: left;
+  }
+
+  h1,
+  h4,
+  p {
+      margin: 0;
+  }
+
+  .container {
+      padding: 20px 0;
+      width: 1000px;
+      max-width: 90%;
+      margin: 0 auto;
+  }
+
+  .inv-title {
+      padding: 10px;
+      border: 1px solid silver;
+      text-align: center;
+      margin-bottom: 30px;
+  }
+
+  .inv-logo {
+      width: 300px;
+      display: block;
+      margin: 0 auto;
+      margin-bottom: 40px;
+  }
+
+  /* header */
+  .inv-header {
+      display: flex;
+      margin-bottom: 16px;
+  }
+
+  .inv-header > :nth-child(1) {
+      flex: 2;
+  }
+
+  .inv-header > :nth-child(2) {
+      flex: 1;
+  }
+
+  .inv-header h2 {
+      font-size: 10px;
+      font-family: 'Times New Roman', Times, serif;
+      margin: 0 0 0.3rem 0;
+  }
+
+  .inv-header ul li {
+      font-size: 12px;
+      padding: 3px 0;
+  }
+
+  /* body */
+  .inv-body table th,
+  .inv-body table td {
+      text-align: left;
+  }
+
+  .inv-body {
+      margin-bottom: 30px;
+  }
+
+  /* footer */
+  .inv-footer {
+      display: flex;
+      flex-direction: row;
+  }
+
+  .inv-footer > :nth-child(1) {
+      flex: 2;
+  }
+
+  .inv-footer > :nth-child(2) {
+      flex: 1;
+  }
+
+  tr {
+      page-break-inside: avoid;
+  }
+
+  tbody {
+      page-break-inside: avoid;
+  }
+  .footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+            text-align: left;
+        }
+
+  @media print {
+      /* Rest of your existing styles */
+      #client_details{
+       width:400px; 
+      }
+      #bank_details {
+            border: none;
+        }
+
+      #bank_details tbody td {
+            border: none;
+        }
+      tbody {
+        margin-top: 200px; /* Adjust this value as needed */
+        font-size: 12px;
+        padding:10px;
+    }
+  .inv-body {
+    margin-bottom: 30px;
+  }
+  tbody tr {
+      page-break-inside: auto;
+  }
+
+    /* Add this style to handle page breaks for headings */
+    .no-page-break {
+        page-break-before: auto;
+    }
+
+  
+}
+#bank_details{border:none;}
+  #bank_details tbody td {
+    text-align: left;
+    font-weight:20;
+    font-size: 10px;
+}
+</style>
+
+{% endblock %}
+{% load i18n admin_urls %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+        &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+        &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+        &rsaquo; {{ object }}
+    </div>
+{% endblock %}

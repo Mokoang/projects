@@ -1,24 +1,31 @@
 from import_export.fields import Field
-from registered.models import Landuse_Type
-from .models import reference_table
+from registered.models import lease
+from reference_tables.models import Landuse_Type
+from .models import Bill_payment
+from reference_tables.models import reference_table
 import datetime
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from import_export.widgets import ForeignKeyWidget, DateWidget
+from import_export import resources, fields, widgets
+from import_export.widgets import ForeignKeyWidget
+from import_export.results import RowResult
 
 
-#This class is used to define the import / export functions
-class rtAdminResource(resources.ModelResource):
-  landuse_type        = Field(column_name='Lease number',attribute='landuse_type', widget=ForeignKeyWidget(Landuse_Type, field='landuse')) 
-  zone_number         = Field(attribute='zone_number', column_name = 'Zone Number')
-  fixed_rate          = Field(attribute='fixed_rate', column_name = 'Fixed Rate')
-  penalty             = Field(attribute='penalty', column_name = 'Penalty (%)')
+class billpaymentResource(resources.ModelResource):
+  lease_number = fields.Field(
+      column_name='Lease number',
+      attribute='lease_number',
+      widget=ForeignKeyWidget(lease, field='lease_number')
+  )
 
-  class Meta:  
-    model            = reference_table
-    fields           = ('landuse_type','zone_number','fixed_rate','penalty','period')
-    export_order     = ('landuse_type','zone_number','fixed_rate','penalty','period')
-    exclude          = ('id',)
-    import_id_fields = ('landuse_type','zone_number','period')
+  class Meta:
+    model            = Bill_payment
+    fields           = ('payment_date', 'lease_number', 'amount_paid', 'reciept_number')
+    exclude          = ('id', 'payment_period')
+    import_id_fields = ('lease_number', 'reciept_number')
     skip_unchanged   = True
     report_skipped   = True
+
+
+              
